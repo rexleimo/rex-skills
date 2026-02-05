@@ -1,0 +1,4 @@
+interface:
+  display_name: "Anthropic 1P Prompt Optimizer"
+  short_description: "Prompt优化/改写工作流（基于Anthropic 1P教程）"
+  default_prompt: "请按Anthropic 1P教程的方法帮我优化下面的提示词：\\n\\n<current_prompt>...\\n</current_prompt>\\n\\n目标：...\\n约束：...\\n输出格式：...\\n\\n请给出：1) 改写后的system/user prompt（必要时含few-shot示例与XML分隔）2) 你做了哪些关键改动（简要）3) 3-5条测试用例与判定标准。"
