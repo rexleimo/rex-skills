@@ -89,6 +89,21 @@ Please ensure your skill follows the `SKILL.md` metadata standard and includes a
     * **Claude Code**: 用于 SOTA 级别的复杂代码重构。
     * **Codex/Main Agent**: 用于整体任务流控制。
 
+### 4. [OpenSpec 并行代理 (OpenSpec Parallel Agents)](./openspec-parallel-agents/)
+* **目标**: 编排 OpenSpec 工作流的并发子代理。
+* **特性**: 支持 OPSX、旧版 openspec 和 Codex CLI 命令。通过依赖分析安全处理多个变更。
+* **适用场景**: 需要并行执行 OpenSpec 提案、应用或归档任务，且需避免写入冲突时。
+
+### 5. [Spec Kit 并行编排器 (Spec Kit Parallel Orchestrator)](./spec-kit-parallel-orchestrator/)
+* **目标**: 并行化 Spec Kit 工作流（定义、计划、实现）。
+* **方法论**: 将任务拆分为 3-6 个并行子代理，并进行阶段性汇总。
+* **适用场景**: 使用 `/speckit.*` 命令或请求基于 Spec 驱动的并发开发流程时。
+
+### 6. [Superpowers 并行代理 (Superpowers Parallel Agents)](./superpowers-parallel-agents/)
+* **目标**: 通过将任务拆分为独立领域来加速 "superpowers" 任务。
+* **工作流**: 调度并行代理进行实现和验证，确保编辑范围不重叠。
+* **适用场景**: 当任务可以划分为不同的问题域，且可以并发解决和验证时。
+
 ## 🚀 安装与使用 (Installation & Usage)
 
 要使用这些技能，通常需要将 `SKILL.md` 文件注册到你的 AI CLI Agent 中。
