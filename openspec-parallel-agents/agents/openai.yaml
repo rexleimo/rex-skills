@@ -1,0 +1,4 @@
+interface:
+  display_name: "OpenSpec 并发编排（含 Legacy/Codex）"
+  short_description: "兼容 /opsx:*、/openspec:*、/prompts:* 的受控并发子代理执行"
+  default_prompt: "先识别命令入口（OPSX、legacy openspec、Codex /prompts），必要时做旧命令到 /opsx:* 的语义映射；然后执行依赖与冲突校验，拆分 3-6 个无冲突子任务并发执行；强依赖链保持串行；每轮完成后统一汇总并决定下一轮。"

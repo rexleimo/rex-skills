@@ -1,0 +1,4 @@
+interface:
+  display_name: "Superpowers 并发子代理"
+  short_description: "按问题域拆分并行子代理，统一审查与回归"
+  default_prompt: "当任务可拆分为多个独立问题域时，先使用 dispatching-parallel-agents 拆分并发任务，再按 subagent-driven-development 执行；全部返回后统一审查冲突与回归验证，不满足条件则转串行。"
