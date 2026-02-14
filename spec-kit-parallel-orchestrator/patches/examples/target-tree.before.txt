@@ -1,0 +1,22 @@
+# target repo tree (before)
+.specify/
+  scripts/bash/
+    common.sh
+    check-prerequisites.sh
+  templates/
+    plan-template.md
+
+.codex/
+  prompts/
+    speckit.plan.md
+    speckit.tasks.md
+    speckit.implement.md
+
+.claude/
+  commands/
+    speckit.plan.md
+    speckit.tasks.md
+    speckit.implement.md
+
+specs/
+  README.md

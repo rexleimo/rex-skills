@@ -1,0 +1,53 @@
+{
+  "patch_id": "long-running-harness.full",
+  "patch_version": "1.0.0",
+  "description": "Spec Kit long-running harness integration for Codex CLI and Claude Code.",
+  "distribution": "git-apply",
+  "installer": {
+    "one_liner_install": "curl -fsSL https://raw.githubusercontent.com/rexleimo/rex-skills/main/spec-kit-parallel-orchestrator/scripts/install.sh | bash",
+    "one_liner_uninstall": "curl -fsSL https://raw.githubusercontent.com/rexleimo/rex-skills/main/spec-kit-parallel-orchestrator/scripts/uninstall.sh | bash",
+    "local_install": "bash ./scripts/install.sh --repo /path/to/target-repo",
+    "local_uninstall": "bash ./scripts/uninstall.sh --repo /path/to/target-repo"
+  },
+  "min_requirements": {
+    "git": ">=2.30",
+    "node": ">=18"
+  },
+  "target_paths_required": [
+    ".specify/scripts/bash/common.sh",
+    ".specify/scripts/bash/check-prerequisites.sh",
+    ".specify/templates/plan-template.md",
+    "specs/README.md"
+  ],
+  "target_paths_optional": [
+    ".codex/prompts/speckit.plan.md",
+    ".codex/prompts/speckit.tasks.md",
+    ".codex/prompts/speckit.implement.md",
+    ".claude/commands/speckit.plan.md",
+    ".claude/commands/speckit.tasks.md",
+    ".claude/commands/speckit.implement.md",
+    "frontend/package.json",
+    "frontend/package-lock.json"
+  ],
+  "new_files_expected": [
+    ".specify/scripts/bash/harness-lib.sh",
+    ".specify/scripts/bash/harness-init.sh",
+    ".specify/scripts/bash/harness-pick-next.sh",
+    ".specify/scripts/bash/harness-start-session.sh",
+    ".specify/scripts/bash/harness-end-session.sh",
+    ".specify/scripts/bash/harness-verify-e2e.sh",
+    "tests/specify/harness_scripts_test.sh",
+    "frontend/playwright.smoke.config.mjs",
+    "frontend/tests/e2e/smoke.spec.mjs"
+  ],
+  "post_apply_checks": [
+    "bash -n .specify/scripts/bash/harness-*.sh .specify/scripts/bash/harness-lib.sh",
+    ".specify/scripts/bash/check-prerequisites.sh --json --include-tasks",
+    "npm --prefix frontend run test:e2e:smoke -- --list"
+  ],
+  "known_conflicts": [
+    "Custom forks of speckit prompt templates may require manual merge.",
+    "Repositories without .codex or .claude can ignore missing-side hunks.",
+    "Non-frontend repositories should use HARNESS_E2E_CMD instead of frontend smoke script."
+  ]
+}

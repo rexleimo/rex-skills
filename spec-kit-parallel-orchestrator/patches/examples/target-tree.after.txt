@@ -1,0 +1,37 @@
+# target repo tree (after)
+.specify/
+  scripts/bash/
+    common.sh                              # updated
+    check-prerequisites.sh                 # updated
+    harness-lib.sh                         # new
+    harness-init.sh                        # new
+    harness-pick-next.sh                   # new
+    harness-start-session.sh               # new
+    harness-end-session.sh                 # new
+    harness-verify-e2e.sh                  # new
+  templates/
+    plan-template.md                       # updated
+
+.codex/
+  prompts/
+    speckit.plan.md                        # updated
+    speckit.tasks.md                       # updated
+    speckit.implement.md                   # updated
+
+.claude/
+  commands/
+    speckit.plan.md                        # updated
+    speckit.tasks.md                       # updated
+    speckit.implement.md                   # updated
+
+specs/
+  README.md                                # updated
+
+frontend/
+  package.json                             # updated
+  package-lock.json                        # updated
+  playwright.smoke.config.mjs              # new
+  tests/e2e/smoke.spec.mjs                 # new
+
+tests/
+  specify/harness_scripts_test.sh          # new

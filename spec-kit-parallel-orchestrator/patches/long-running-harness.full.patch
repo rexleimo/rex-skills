@@ -1,0 +1,1076 @@
+diff --git a/.claude/commands/speckit.implement.md b/.claude/commands/speckit.implement.md
+index 41da7b9..74cd490 100644
+--- a/.claude/commands/speckit.implement.md
++++ b/.claude/commands/speckit.implement.md
+@@ -52,6 +52,12 @@ You **MUST** consider the user input before proceeding (if not empty).
+    - **IF EXISTS**: Read contracts/ for API specifications and test requirements
+    - **IF EXISTS**: Read research.md for technical decisions and constraints
+    - **IF EXISTS**: Read quickstart.md for integration scenarios
++   - **IF EXISTS**: Read `harness/feature_list.json`, `harness/progress.log.md`, and `harness/session_state.json` for cross-session continuity
++
++3.1 **Start long-running session**:
++   - If harness files are missing, run `.specify/scripts/bash/harness-init.sh --feature <feature-id> --tool claude`
++   - Run `.specify/scripts/bash/harness-start-session.sh --feature <feature-id> --tool claude`
++   - Run `.specify/scripts/bash/harness-pick-next.sh --feature <feature-id>` and align current batch around that feature
+ 
+ 4. **Project Setup Verification**:
+    - **REQUIRED**: Create/verify ignore files based on actual project setup:
+@@ -124,12 +130,15 @@ You **MUST** consider the user input before proceeding (if not empty).
+    - Provide clear error messages with context for debugging
+    - Suggest next steps if implementation cannot proceed
+    - **IMPORTANT** For completed tasks, make sure to mark the task off as [X] in the tasks file.
++   - Append meaningful progress notes to `harness/progress.log.md` for each completed batch.
++   - Maintain a clean git state before ending the session (no unstaged/uncommitted changes).
+ 
+ 9. Completion validation:
+    - Verify all required tasks are completed
+    - Check that implemented features match the original specification
+    - Validate that tests pass and coverage meets requirements
+    - Confirm the implementation follows the technical plan
++   - Run `.specify/scripts/bash/harness-end-session.sh --feature <feature-id> --tool claude` to enforce commit + e2e gate before marking feature status `passing`
+    - Report final status with summary of completed work
+ 
+ Note: This command assumes a complete task breakdown exists in tasks.md. If tasks are incomplete or missing, suggest running `/speckit.tasks` first to regenerate the task list.
+diff --git a/.claude/commands/speckit.plan.md b/.claude/commands/speckit.plan.md
+index e9e5599..2ff9016 100644
+--- a/.claude/commands/speckit.plan.md
++++ b/.claude/commands/speckit.plan.md
+@@ -30,6 +30,8 @@ You **MUST** consider the user input before proceeding (if not empty).
+    - Evaluate gates (ERROR if violations unjustified)
+    - Phase 0: Generate research.md (resolve all NEEDS CLARIFICATION)
+    - Phase 1: Generate data-model.md, contracts/, quickstart.md
++   - Phase 1.5: Initialize long-running harness by running `.specify/scripts/bash/harness-init.sh --feature <feature-id> --tool claude`
++   - Phase 1.5: Confirm harness artifacts exist: `harness/feature_list.json`, `harness/progress.log.md`, `harness/session_state.json`, `harness/init.sh`
+    - Phase 1: Update agent context by running the agent script
+    - Re-evaluate Constitution Check post-design
+ 
+@@ -81,7 +83,12 @@ You **MUST** consider the user input before proceeding (if not empty).
+    - Add only new technology from current plan
+    - Preserve manual additions between markers
+ 
+-**Output**: data-model.md, /contracts/*, quickstart.md, agent-specific file
++4. **Harness bootstrap**:
++   - Run `.specify/scripts/bash/harness-init.sh --feature <feature-id> --tool claude`
++   - Ensure `harness/feature_list.json` only tracks status transitions (`failing -> in_progress -> passing`) and preserves feature descriptions.
++   - Ensure `harness/init.sh` can run baseline environment checks before each implement session.
++
++**Output**: data-model.md, /contracts/*, quickstart.md, agent-specific file, harness/*
+ 
+ ## Key rules
+ 
+diff --git a/.claude/commands/speckit.tasks.md b/.claude/commands/speckit.tasks.md
+index f64e86e..545b138 100644
+--- a/.claude/commands/speckit.tasks.md
++++ b/.claude/commands/speckit.tasks.md
+@@ -38,6 +38,8 @@ You **MUST** consider the user input before proceeding (if not empty).
+    - Generate dependency graph showing user story completion order
+    - Create parallel execution examples per user story
+    - Validate task completeness (each user story has all needed tasks, independently testable)
++   - Add harness lifecycle tasks: session start (`harness-start-session.sh`), pick-next (`harness-pick-next.sh`), session end (`harness-end-session.sh`), and e2e gate (`harness-verify-e2e.sh`)
++   - Mark any status transition task in `harness/feature_list.json` as sequential (not `[P]`) to avoid write conflicts
+ 
+ 4. **Generate tasks.md**: Use `.specify/templates/tasks-template.md` as structure, fill with:
+    - Correct feature name from plan.md
+@@ -46,6 +48,7 @@ You **MUST** consider the user input before proceeding (if not empty).
+    - Phase 3+: One phase per user story (in priority order from spec.md)
+    - Each phase includes: story goal, independent test criteria, tests (if requested), implementation tasks
+    - Final Phase: Polish & cross-cutting concerns
++   - Ensure Final Phase includes explicit task for e2e smoke pass before changing a feature to `passing`
+    - All tasks must follow the strict checklist format (see Task Generation Rules below)
+    - Clear file paths for each task
+    - Dependencies section showing story completion order
+diff --git a/.codex/prompts/speckit.implement.md b/.codex/prompts/speckit.implement.md
+index 41da7b9..b827d47 100644
+--- a/.codex/prompts/speckit.implement.md
++++ b/.codex/prompts/speckit.implement.md
+@@ -52,6 +52,12 @@ You **MUST** consider the user input before proceeding (if not empty).
+    - **IF EXISTS**: Read contracts/ for API specifications and test requirements
+    - **IF EXISTS**: Read research.md for technical decisions and constraints
+    - **IF EXISTS**: Read quickstart.md for integration scenarios
++   - **IF EXISTS**: Read `harness/feature_list.json`, `harness/progress.log.md`, and `harness/session_state.json` for cross-session continuity
++
++3.1 **Start long-running session**:
++   - If harness files are missing, run `.specify/scripts/bash/harness-init.sh --feature <feature-id> --tool codex`
++   - Run `.specify/scripts/bash/harness-start-session.sh --feature <feature-id> --tool codex`
++   - Run `.specify/scripts/bash/harness-pick-next.sh --feature <feature-id>` and align current batch around that feature
+ 
+ 4. **Project Setup Verification**:
+    - **REQUIRED**: Create/verify ignore files based on actual project setup:
+@@ -124,12 +130,15 @@ You **MUST** consider the user input before proceeding (if not empty).
+    - Provide clear error messages with context for debugging
+    - Suggest next steps if implementation cannot proceed
+    - **IMPORTANT** For completed tasks, make sure to mark the task off as [X] in the tasks file.
++   - Append meaningful progress notes to `harness/progress.log.md` for each completed batch.
++   - Maintain a clean git state before ending the session (no unstaged/uncommitted changes).
+ 
+ 9. Completion validation:
+    - Verify all required tasks are completed
+    - Check that implemented features match the original specification
+    - Validate that tests pass and coverage meets requirements
+    - Confirm the implementation follows the technical plan
++   - Run `.specify/scripts/bash/harness-end-session.sh --feature <feature-id> --tool codex` to enforce commit + e2e gate before marking feature status `passing`
+    - Report final status with summary of completed work
+ 
+ Note: This command assumes a complete task breakdown exists in tasks.md. If tasks are incomplete or missing, suggest running `/speckit.tasks` first to regenerate the task list.
+diff --git a/.codex/prompts/speckit.plan.md b/.codex/prompts/speckit.plan.md
+index a24508b..457d0c5 100644
+--- a/.codex/prompts/speckit.plan.md
++++ b/.codex/prompts/speckit.plan.md
+@@ -30,6 +30,8 @@ You **MUST** consider the user input before proceeding (if not empty).
+    - Evaluate gates (ERROR if violations unjustified)
+    - Phase 0: Generate research.md (resolve all NEEDS CLARIFICATION)
+    - Phase 1: Generate data-model.md, contracts/, quickstart.md
++   - Phase 1.5: Initialize long-running harness by running `.specify/scripts/bash/harness-init.sh --feature <feature-id> --tool codex`
++   - Phase 1.5: Confirm harness artifacts exist: `harness/feature_list.json`, `harness/progress.log.md`, `harness/session_state.json`, `harness/init.sh`
+    - Phase 1: Update agent context by running the agent script
+    - Re-evaluate Constitution Check post-design
+ 
+@@ -81,7 +83,12 @@ You **MUST** consider the user input before proceeding (if not empty).
+    - Add only new technology from current plan
+    - Preserve manual additions between markers
+ 
+-**Output**: data-model.md, /contracts/*, quickstart.md, agent-specific file
++4. **Harness bootstrap**:
++   - Run `.specify/scripts/bash/harness-init.sh --feature <feature-id> --tool codex`
++   - Ensure `harness/feature_list.json` only tracks status transitions (`failing -> in_progress -> passing`) and preserves feature descriptions.
++   - Ensure `harness/init.sh` can run baseline environment checks before each implement session.
++
++**Output**: data-model.md, /contracts/*, quickstart.md, agent-specific file, harness/*
+ 
+ ## Key rules
+ 
+diff --git a/.codex/prompts/speckit.tasks.md b/.codex/prompts/speckit.tasks.md
+index f64e86e..545b138 100644
+--- a/.codex/prompts/speckit.tasks.md
++++ b/.codex/prompts/speckit.tasks.md
+@@ -38,6 +38,8 @@ You **MUST** consider the user input before proceeding (if not empty).
+    - Generate dependency graph showing user story completion order
+    - Create parallel execution examples per user story
+    - Validate task completeness (each user story has all needed tasks, independently testable)
++   - Add harness lifecycle tasks: session start (`harness-start-session.sh`), pick-next (`harness-pick-next.sh`), session end (`harness-end-session.sh`), and e2e gate (`harness-verify-e2e.sh`)
++   - Mark any status transition task in `harness/feature_list.json` as sequential (not `[P]`) to avoid write conflicts
+ 
+ 4. **Generate tasks.md**: Use `.specify/templates/tasks-template.md` as structure, fill with:
+    - Correct feature name from plan.md
+@@ -46,6 +48,7 @@ You **MUST** consider the user input before proceeding (if not empty).
+    - Phase 3+: One phase per user story (in priority order from spec.md)
+    - Each phase includes: story goal, independent test criteria, tests (if requested), implementation tasks
+    - Final Phase: Polish & cross-cutting concerns
++   - Ensure Final Phase includes explicit task for e2e smoke pass before changing a feature to `passing`
+    - All tasks must follow the strict checklist format (see Task Generation Rules below)
+    - Clear file paths for each task
+    - Dependencies section showing story completion order
+diff --git a/.specify/scripts/bash/check-prerequisites.sh b/.specify/scripts/bash/check-prerequisites.sh
+index 98e387c..7ff6a9e 100755
+--- a/.specify/scripts/bash/check-prerequisites.sh
++++ b/.specify/scripts/bash/check-prerequisites.sh
+@@ -131,6 +131,11 @@ if [[ -d "$CONTRACTS_DIR" ]] && [[ -n "$(ls -A "$CONTRACTS_DIR" 2>/dev/null)" ]]
+     docs+=("contracts/")
+ fi
+ 
++# Check harness directory (only if it exists and has files)
++if [[ -d "$HARNESS_DIR" ]] && [[ -n "$(ls -A "$HARNESS_DIR" 2>/dev/null)" ]]; then
++    docs+=("harness/")
++fi
++
+ [[ -f "$QUICKSTART" ]] && docs+=("quickstart.md")
+ 
+ # Include tasks.md if requested and it exists
+@@ -158,6 +163,7 @@ else
+     check_file "$RESEARCH" "research.md"
+     check_file "$DATA_MODEL" "data-model.md"
+     check_dir "$CONTRACTS_DIR" "contracts/"
++    check_dir "$HARNESS_DIR" "harness/"
+     check_file "$QUICKSTART" "quickstart.md"
+     
+     if $INCLUDE_TASKS; then
+diff --git a/.specify/scripts/bash/common.sh b/.specify/scripts/bash/common.sh
+index a6871cc..72a0a74 100755
+--- a/.specify/scripts/bash/common.sh
++++ b/.specify/scripts/bash/common.sh
+@@ -155,6 +155,7 @@ RESEARCH='$feature_dir/research.md'
+ DATA_MODEL='$feature_dir/data-model.md'
+ QUICKSTART='$feature_dir/quickstart.md'
+ CONTRACTS_DIR='$feature_dir/contracts'
++HARNESS_DIR='$feature_dir/harness'
+ EOF
+ }
+ 
+diff --git a/.specify/templates/plan-template.md b/.specify/templates/plan-template.md
+index 7a262fa..81f2e0d 100644
+--- a/.specify/templates/plan-template.md
++++ b/.specify/templates/plan-template.md
+@@ -26,6 +26,7 @@
+ **Performance Goals**: [domain-specific, e.g., 1000 req/s, 10k lines/sec, 60 fps or NEEDS CLARIFICATION]  
+ **Constraints**: [domain-specific, e.g., <200ms p95, <100MB memory, offline-capable or NEEDS CLARIFICATION]  
+ **Scale/Scope**: [domain-specific, e.g., 10k users, 1M LOC, 50 screens or NEEDS CLARIFICATION]
++**Long-Running Harness**: [required for multi-session work: harness/feature_list.json, harness/progress.log.md, harness/session_state.json, harness/init.sh]
+ 
+ ## Constitution Check
+ 
+@@ -51,6 +52,11 @@ specs/[###-feature]/
+ ├── data-model.md        # Phase 1 output (/speckit.plan command)
+ ├── quickstart.md        # Phase 1 output (/speckit.plan command)
+ ├── contracts/           # Phase 1 output (/speckit.plan command)
++├── harness/             # Long-running session continuity artifacts
++│   ├── feature_list.json
++│   ├── progress.log.md
++│   ├── session_state.json
++│   └── init.sh
+ └── tasks.md             # Phase 2 output (/speckit.tasks command - NOT created by /speckit.plan)
+ ```
+ 
+diff --git a/frontend/package-lock.json b/frontend/package-lock.json
+index 6975985..8b0f8c0 100644
+--- a/frontend/package-lock.json
++++ b/frontend/package-lock.json
+@@ -43,6 +43,7 @@
+         "unist-util-visit": "^5.0.0"
+       },
+       "devDependencies": {
++        "@playwright/test": "^1.58.2",
+         "@react-router/dev": "^7.9.2",
+         "@tailwindcss/vite": "^4.1.13",
+         "@testing-library/jest-dom": "^6.6.3",
+@@ -1373,6 +1374,22 @@
+         "node": ">=14"
+       }
+     },
++    "node_modules/@playwright/test": {
++      "version": "1.58.2",
++      "resolved": "https://registry.npmjs.org/@playwright/test/-/test-1.58.2.tgz",
++      "integrity": "sha512-akea+6bHYBBfA9uQqSYmlJXn61cTa+jbO87xVLCWbTqbWadRVmhxlXATaOjOgcBaWU4ePo0wB41KMFv3o35IXA==",
++      "dev": true,
++      "license": "Apache-2.0",
++      "dependencies": {
++        "playwright": "1.58.2"
++      },
++      "bin": {
++        "playwright": "cli.js"
++      },
++      "engines": {
++        "node": ">=18"
++      }
++    },
+     "node_modules/@polka/url": {
+       "version": "1.0.0-next.29",
+       "resolved": "https://registry.npmjs.org/@polka/url/-/url-1.0.0-next.29.tgz",
+@@ -8323,6 +8340,53 @@
+         "url": "https://github.com/sponsors/jonschlinkert"
+       }
+     },
++    "node_modules/playwright": {
++      "version": "1.58.2",
++      "resolved": "https://registry.npmjs.org/playwright/-/playwright-1.58.2.tgz",
++      "integrity": "sha512-vA30H8Nvkq/cPBnNw4Q8TWz1EJyqgpuinBcHET0YVJVFldr8JDNiU9LaWAE1KqSkRYazuaBhTpB5ZzShOezQ6A==",
++      "dev": true,
++      "license": "Apache-2.0",
++      "dependencies": {
++        "playwright-core": "1.58.2"
++      },
++      "bin": {
++        "playwright": "cli.js"
++      },
++      "engines": {
++        "node": ">=18"
++      },
++      "optionalDependencies": {
++        "fsevents": "2.3.2"
++      }
++    },
++    "node_modules/playwright-core": {
++      "version": "1.58.2",
++      "resolved": "https://registry.npmjs.org/playwright-core/-/playwright-core-1.58.2.tgz",
++      "integrity": "sha512-yZkEtftgwS8CsfYo7nm0KE8jsvm6i/PTgVtB8DL726wNf6H2IMsDuxCpJj59KDaxCtSnrWan2AeDqM7JBaultg==",
++      "dev": true,
++      "license": "Apache-2.0",
++      "bin": {
++        "playwright-core": "cli.js"
++      },
++      "engines": {
++        "node": ">=18"
++      }
++    },
++    "node_modules/playwright/node_modules/fsevents": {
++      "version": "2.3.2",
++      "resolved": "https://registry.npmjs.org/fsevents/-/fsevents-2.3.2.tgz",
++      "integrity": "sha512-xiqMQR4xAeHTuB9uWm+fFRcIOgKBMiOBP+eXiyT7jsgVCq1bkVygt00oASowB7EdtpOHaaPgKt812P9ab+DDKA==",
++      "dev": true,
++      "hasInstallScript": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "darwin"
++      ],
++      "engines": {
++        "node": "^8.16.0 || ^10.6.0 || >=11.0.0"
++      }
++    },
+     "node_modules/postcss": {
+       "version": "8.5.6",
+       "resolved": "https://registry.npmjs.org/postcss/-/postcss-8.5.6.tgz",
+diff --git a/frontend/package.json b/frontend/package.json
+index 097f346..93ee868 100644
+--- a/frontend/package.json
++++ b/frontend/package.json
+@@ -13,7 +13,8 @@
+     "test:landing": "vitest run tests/landing",
+     "test:routes": "vitest run tests/routes",
+     "test:tools": "vitest run tests/tools",
+-    "test:unit": "vitest run tests/unit"
++    "test:unit": "vitest run tests/unit",
++    "test:e2e:smoke": "npx --yes playwright test tests/e2e/smoke.spec.mjs --config=playwright.smoke.config.mjs"
+   },
+   "dependencies": {
+     "@radix-ui/react-accordion": "^1.2.12",
+@@ -53,6 +54,7 @@
+     "unist-util-visit": "^5.0.0"
+   },
+   "devDependencies": {
++    "@playwright/test": "^1.58.2",
+     "@react-router/dev": "^7.9.2",
+     "@tailwindcss/vite": "^4.1.13",
+     "@testing-library/jest-dom": "^6.6.3",
+diff --git a/specs/README.md b/specs/README.md
+index 9b2ad21..fc7d95c 100644
+--- a/specs/README.md
++++ b/specs/README.md
+@@ -84,6 +84,34 @@ specs/
+      - 通过新的 feature-id 立项（放在 `specs/` 下），
+      - 说明和旧归档的差异，而不是直接覆盖归档内容。
+ 
++## Long-Running Harness 约定（Claude Code / Codex CLI 通用）
++
++为了让 spec-kit 可以跨多轮上下文稳定推进，每个活跃 feature 建议启用 harness 目录：
++
++```text
++specs/<feature-id>/harness/
++  feature_list.json
++  progress.log.md
++  session_state.json
++  init.sh
++```
++
++- `feature_list.json`：功能清单与状态机（推荐状态流：`failing -> in_progress -> passing`）。  
++- `progress.log.md`：每轮 session 的结构化进度日志（开始、结束、阻塞、下一步）。  
++- `session_state.json`：当前会话状态（当前任务、会话编号、最近提交、E2E 结果）。  
++- `init.sh`：每轮会话开头的环境基线检查脚本。  
++
++推荐流程：
++
++1. 规划阶段（`/speckit.plan`）初始化 harness：  
++   - `.specify/scripts/bash/harness-init.sh --feature <feature-id> --tool codex|claude`
++2. 实施阶段（`/speckit.implement`）会话开始：  
++   - `harness-start-session.sh` -> `harness-pick-next.sh`
++3. 每轮结束前强制门禁：  
++   - 确认有新 commit、工作区干净
++   - 执行 `harness-verify-e2e.sh`
++   - 通过后执行 `harness-end-session.sh`
++
+ ## 推荐工作流（人类开发者视角）
+ 
+ 1. **发现需求 / 问题**  
+@@ -105,4 +133,3 @@ specs/
+ - 更准确地区分“已有能力”与“新需求”，
+ - 在 spec-kit 规划时自动参考归档内容，
+ - 避免对已完成功能重复立项或错误假设为“未实现”。 
+-
+diff --git a/.specify/scripts/bash/harness-lib.sh b/.specify/scripts/bash/harness-lib.sh
+new file mode 100755
+index 0000000..39cf0e3
+--- /dev/null
++++ b/.specify/scripts/bash/harness-lib.sh
+@@ -0,0 +1,70 @@
++#!/usr/bin/env bash
++
++# 长时运行 harness 的通用函数。
++
++set -euo pipefail
++
++SCRIPT_DIR="$(CDPATH="" cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
++source "$SCRIPT_DIR/common.sh"
++
++harness_die() {
++  echo "ERROR: $1" >&2
++  exit 1
++}
++
++harness_now_utc() {
++  date -u +"%Y-%m-%dT%H:%M:%SZ"
++}
++
++harness_require_cmd() {
++  local cmd="$1"
++  command -v "$cmd" >/dev/null 2>&1 || harness_die "Missing required command: $cmd"
++}
++
++harness_init_context() {
++  local feature_input="${1:-}"
++  eval "$(get_feature_paths)"
++
++  HARNESS_REPO_ROOT="$REPO_ROOT"
++  HARNESS_FEATURE="${feature_input:-$CURRENT_BRANCH}"
++
++  if [[ -n "$feature_input" ]]; then
++    HARNESS_FEATURE_DIR="$(find_feature_dir_by_prefix "$REPO_ROOT" "$feature_input")"
++  else
++    HARNESS_FEATURE_DIR="$FEATURE_DIR"
++  fi
++
++  HARNESS_DIR="$HARNESS_FEATURE_DIR/harness"
++  HARNESS_FEATURE_LIST="$HARNESS_DIR/feature_list.json"
++  HARNESS_PROGRESS_LOG="$HARNESS_DIR/progress.log.md"
++  HARNESS_STATE_FILE="$HARNESS_DIR/session_state.json"
++  HARNESS_INIT_SCRIPT="$HARNESS_DIR/init.sh"
++}
++
++harness_require_feature_dir() {
++  [[ -d "$HARNESS_FEATURE_DIR" ]] || harness_die "Feature directory not found: $HARNESS_FEATURE_DIR"
++}
++
++harness_require_harness_files() {
++  [[ -f "$HARNESS_FEATURE_LIST" ]] || harness_die "Missing harness file: $HARNESS_FEATURE_LIST"
++  [[ -f "$HARNESS_PROGRESS_LOG" ]] || harness_die "Missing harness file: $HARNESS_PROGRESS_LOG"
++  [[ -f "$HARNESS_STATE_FILE" ]] || harness_die "Missing harness file: $HARNESS_STATE_FILE"
++  [[ -f "$HARNESS_INIT_SCRIPT" ]] || harness_die "Missing harness file: $HARNESS_INIT_SCRIPT"
++}
++
++harness_git_head_or_na() {
++  if git -C "$HARNESS_REPO_ROOT" rev-parse --git-dir >/dev/null 2>&1; then
++    git -C "$HARNESS_REPO_ROOT" rev-parse HEAD
++  else
++    echo "no-git"
++  fi
++}
++
++harness_append_progress() {
++  local message="$1"
++  local now
++  now="$(harness_now_utc)"
++  {
++    echo "- [$now] $message"
++  } >>"$HARNESS_PROGRESS_LOG"
++}
+diff --git a/.specify/scripts/bash/harness-init.sh b/.specify/scripts/bash/harness-init.sh
+new file mode 100755
+index 0000000..7b5eb29
+--- /dev/null
++++ b/.specify/scripts/bash/harness-init.sh
+@@ -0,0 +1,125 @@
++#!/usr/bin/env bash
++
++set -euo pipefail
++
++SCRIPT_DIR="$(CDPATH="" cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
++source "$SCRIPT_DIR/harness-lib.sh"
++
++FEATURE=""
++TOOL="codex"
++
++while [[ $# -gt 0 ]]; do
++  case "$1" in
++    --feature)
++      FEATURE="${2:-}"
++      shift 2
++      ;;
++    --tool)
++      TOOL="${2:-}"
++      shift 2
++      ;;
++    --help|-h)
++      cat <<'EOF'
++Usage: harness-init.sh [--feature <feature-id>] [--tool <codex|claude>]
++EOF
++      exit 0
++      ;;
++    *)
++      harness_die "Unknown option: $1"
++      ;;
++  esac
++done
++
++harness_require_cmd node
++harness_init_context "$FEATURE"
++harness_require_feature_dir
++
++mkdir -p "$HARNESS_DIR"
++
++if [[ ! -f "$HARNESS_FEATURE_LIST" ]]; then
++  node - "$HARNESS_FEATURE_DIR/spec.md" >"$HARNESS_FEATURE_LIST" <<'NODE'
++const fs = require("fs");
++const specPath = process.argv[2];
++const text = fs.existsSync(specPath) ? fs.readFileSync(specPath, "utf8") : "";
++const lines = text.split(/\r?\n/);
++const features = [];
++let n = 1;
++for (const line of lines) {
++  const m = line.match(/^###\s+User Story\s+\d+\s*-\s*(.+?)\s*\(Priority:\s*(P\d+)\)/i);
++  if (!m) continue;
++  const id = `F-${String(n).padStart(3, "0")}`;
++  features.push({
++    id,
++    category: "functional",
++    description: m[1].trim(),
++    priority: m[2].toUpperCase(),
++    acceptance_steps: [],
++    status: "failing",
++    verified_by: "",
++    updated_at: new Date().toISOString()
++  });
++  n += 1;
++}
++if (features.length === 0) {
++  features.push({
++    id: "F-001",
++    category: "functional",
++    description: "Initial harness placeholder feature",
++    priority: "P1",
++    acceptance_steps: [],
++    status: "failing",
++    verified_by: "",
++    updated_at: new Date().toISOString()
++  });
++}
++process.stdout.write(JSON.stringify(features, null, 2) + "\n");
++NODE
++fi
++
++if [[ ! -f "$HARNESS_PROGRESS_LOG" ]]; then
++  cat >"$HARNESS_PROGRESS_LOG" <<EOF
++# Long-Running Agent Progress
++
++- [$(harness_now_utc)] Harness initialized (tool: $TOOL)
++EOF
++fi
++
++if [[ ! -f "$HARNESS_STATE_FILE" ]]; then
++  cat >"$HARNESS_STATE_FILE" <<EOF
++{
++  "current_task_id": "",
++  "session_index": 0,
++  "session_started_at": "",
++  "session_started_commit": "",
++  "last_commit": "$(harness_git_head_or_na)",
++  "last_e2e_result": "not_run",
++  "next_action": "run harness-start-session",
++  "updated_at": "$(harness_now_utc)",
++  "tool": "$TOOL"
++}
++EOF
++fi
++
++if [[ ! -f "$HARNESS_INIT_SCRIPT" ]]; then
++  cat >"$HARNESS_INIT_SCRIPT" <<'EOF'
++#!/usr/bin/env bash
++
++set -euo pipefail
++
++ROOT_DIR="$(CDPATH="" cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
++cd "$ROOT_DIR"
++
++echo "[harness] pwd: $(pwd)"
++echo "[harness] baseline checks start"
++
++if [[ -x ".specify/scripts/bash/check-prerequisites.sh" ]]; then
++  .specify/scripts/bash/check-prerequisites.sh --paths-only >/dev/null
++fi
++
++echo "[harness] baseline checks done"
++EOF
++  chmod +x "$HARNESS_INIT_SCRIPT"
++fi
++
++harness_append_progress "Harness init complete (tool: $TOOL)"
++echo "Harness initialized: $HARNESS_DIR"
+diff --git a/.specify/scripts/bash/harness-pick-next.sh b/.specify/scripts/bash/harness-pick-next.sh
+new file mode 100755
+index 0000000..31c0725
+--- /dev/null
++++ b/.specify/scripts/bash/harness-pick-next.sh
+@@ -0,0 +1,68 @@
++#!/usr/bin/env bash
++
++set -euo pipefail
++
++SCRIPT_DIR="$(CDPATH="" cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
++source "$SCRIPT_DIR/harness-lib.sh"
++
++FEATURE=""
++
++while [[ $# -gt 0 ]]; do
++  case "$1" in
++    --feature)
++      FEATURE="${2:-}"
++      shift 2
++      ;;
++    --help|-h)
++      cat <<'EOF'
++Usage: harness-pick-next.sh [--feature <feature-id>]
++EOF
++      exit 0
++      ;;
++    *)
++      harness_die "Unknown option: $1"
++      ;;
++  esac
++done
++
++harness_require_cmd node
++harness_init_context "$FEATURE"
++harness_require_harness_files
++
++node - "$HARNESS_FEATURE_LIST" <<'NODE'
++const fs = require("fs");
++
++const file = process.argv[2];
++const raw = fs.readFileSync(file, "utf8");
++const list = JSON.parse(raw);
++
++const rankPriority = (p = "") => {
++  const m = String(p).toUpperCase().match(/^P(\d+)$/);
++  return m ? Number(m[1]) : 999;
++};
++const rankStatus = (s = "") => {
++  const v = String(s).toLowerCase();
++  if (v === "failing") return 0;
++  if (v === "in_progress") return 1;
++  return 9;
++};
++
++const candidates = list
++  .filter((item) => !["passing", "blocked"].includes(String(item.status || "").toLowerCase()))
++  .sort((a, b) => {
++    const pa = rankPriority(a.priority);
++    const pb = rankPriority(b.priority);
++    if (pa !== pb) return pa - pb;
++    const sa = rankStatus(a.status);
++    const sb = rankStatus(b.status);
++    if (sa !== sb) return sa - sb;
++    return String(a.id || "").localeCompare(String(b.id || ""));
++  });
++
++if (candidates.length === 0) {
++  process.stdout.write("NONE\n");
++  process.exit(0);
++}
++
++process.stdout.write(`${JSON.stringify(candidates[0])}\n`);
++NODE
+diff --git a/.specify/scripts/bash/harness-start-session.sh b/.specify/scripts/bash/harness-start-session.sh
+new file mode 100755
+index 0000000..e062a91
+--- /dev/null
++++ b/.specify/scripts/bash/harness-start-session.sh
+@@ -0,0 +1,88 @@
++#!/usr/bin/env bash
++
++set -euo pipefail
++
++SCRIPT_DIR="$(CDPATH="" cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
++source "$SCRIPT_DIR/harness-lib.sh"
++
++FEATURE=""
++TOOL="codex"
++
++while [[ $# -gt 0 ]]; do
++  case "$1" in
++    --feature)
++      FEATURE="${2:-}"
++      shift 2
++      ;;
++    --tool)
++      TOOL="${2:-}"
++      shift 2
++      ;;
++    --help|-h)
++      cat <<'EOF'
++Usage: harness-start-session.sh [--feature <feature-id>] [--tool <codex|claude>]
++EOF
++      exit 0
++      ;;
++    *)
++      harness_die "Unknown option: $1"
++      ;;
++  esac
++done
++
++harness_require_cmd node
++harness_init_context "$FEATURE"
++harness_require_feature_dir
++
++if [[ ! -f "$HARNESS_FEATURE_LIST" || ! -f "$HARNESS_STATE_FILE" || ! -f "$HARNESS_PROGRESS_LOG" || ! -f "$HARNESS_INIT_SCRIPT" ]]; then
++  "$SCRIPT_DIR/harness-init.sh" --feature "$HARNESS_FEATURE" --tool "$TOOL"
++fi
++harness_require_harness_files
++
++cd "$HARNESS_REPO_ROOT"
++bash "$HARNESS_INIT_SCRIPT"
++
++next_json="$("$SCRIPT_DIR/harness-pick-next.sh" --feature "$HARNESS_FEATURE")"
++if [[ "$next_json" == "NONE" ]]; then
++  harness_append_progress "Session start skipped: no remaining feature"
++  echo "No remaining feature to work on."
++  exit 0
++fi
++
++next_id="$(node -e 'const x=JSON.parse(process.argv[1]); process.stdout.write(String(x.id||""));' "$next_json")"
++if [[ -z "$next_id" ]]; then
++  harness_die "Unable to parse next feature id."
++fi
++
++head_commit="$(harness_git_head_or_na)"
++now="$(harness_now_utc)"
++
++node - "$HARNESS_FEATURE_LIST" "$next_id" "$now" <<'NODE'
++const fs = require("fs");
++const [file, nextId, now] = process.argv.slice(2);
++const list = JSON.parse(fs.readFileSync(file, "utf8"));
++for (const item of list) {
++  if (item.id === nextId) {
++    item.status = "in_progress";
++    item.updated_at = now;
++  }
++}
++fs.writeFileSync(file, JSON.stringify(list, null, 2) + "\n");
++NODE
++
++node - "$HARNESS_STATE_FILE" "$next_id" "$head_commit" "$now" "$TOOL" <<'NODE'
++const fs = require("fs");
++const [file, nextId, commit, now, tool] = process.argv.slice(2);
++const state = JSON.parse(fs.readFileSync(file, "utf8"));
++state.current_task_id = nextId;
++state.session_index = Number(state.session_index || 0) + 1;
++state.session_started_at = now;
++state.session_started_commit = commit;
++state.next_action = "implement current task, commit changes, then run harness-end-session";
++state.updated_at = now;
++state.tool = tool;
++fs.writeFileSync(file, JSON.stringify(state, null, 2) + "\n");
++NODE
++
++harness_append_progress "Session start (#$(node -e "const s=require('fs').readFileSync('$HARNESS_STATE_FILE','utf8');process.stdout.write(String(JSON.parse(s).session_index));")) task: $next_id tool: $TOOL commit: $head_commit"
++echo "Session started. current_task_id=$next_id"
+diff --git a/.specify/scripts/bash/harness-end-session.sh b/.specify/scripts/bash/harness-end-session.sh
+new file mode 100755
+index 0000000..a21260e
+--- /dev/null
++++ b/.specify/scripts/bash/harness-end-session.sh
+@@ -0,0 +1,89 @@
++#!/usr/bin/env bash
++
++set -euo pipefail
++
++SCRIPT_DIR="$(CDPATH="" cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
++source "$SCRIPT_DIR/harness-lib.sh"
++
++FEATURE=""
++TOOL="codex"
++
++while [[ $# -gt 0 ]]; do
++  case "$1" in
++    --feature)
++      FEATURE="${2:-}"
++      shift 2
++      ;;
++    --tool)
++      TOOL="${2:-}"
++      shift 2
++      ;;
++    --help|-h)
++      cat <<'EOF'
++Usage: harness-end-session.sh [--feature <feature-id>] [--tool <codex|claude>]
++EOF
++      exit 0
++      ;;
++    *)
++      harness_die "Unknown option: $1"
++      ;;
++  esac
++done
++
++harness_require_cmd node
++harness_init_context "$FEATURE"
++harness_require_harness_files
++
++cd "$HARNESS_REPO_ROOT"
++
++session_started_commit="$(node -e 'const fs=require("fs");const s=JSON.parse(fs.readFileSync(process.argv[1],"utf8"));process.stdout.write(String(s.session_started_commit||""));' "$HARNESS_STATE_FILE")"
++current_task_id="$(node -e 'const fs=require("fs");const s=JSON.parse(fs.readFileSync(process.argv[1],"utf8"));process.stdout.write(String(s.current_task_id||""));' "$HARNESS_STATE_FILE")"
++
++if [[ -z "$session_started_commit" ]]; then
++  harness_die "Session has not started. Run harness-start-session first."
++fi
++
++if git rev-parse --git-dir >/dev/null 2>&1; then
++  if [[ -n "$(git status --porcelain)" ]]; then
++    harness_die "Working tree is dirty. Commit or stash changes before ending session."
++  fi
++fi
++
++head_commit="$(harness_git_head_or_na)"
++if [[ "$head_commit" == "$session_started_commit" ]]; then
++  harness_die "No new commit detected since session start. Create a commit before ending session."
++fi
++
++"$SCRIPT_DIR/harness-verify-e2e.sh" --feature "$HARNESS_FEATURE"
++
++now="$(harness_now_utc)"
++node - "$HARNESS_FEATURE_LIST" "$current_task_id" "$now" <<'NODE'
++const fs = require("fs");
++const [file, currentTaskId, now] = process.argv.slice(2);
++const list = JSON.parse(fs.readFileSync(file, "utf8"));
++for (const item of list) {
++  if (item.id === currentTaskId) {
++    item.status = "passing";
++    item.verified_by = "harness-verify-e2e";
++    item.updated_at = now;
++  }
++}
++fs.writeFileSync(file, JSON.stringify(list, null, 2) + "\n");
++NODE
++
++node - "$HARNESS_STATE_FILE" "$head_commit" "$now" "$TOOL" <<'NODE'
++const fs = require("fs");
++const [file, headCommit, now, tool] = process.argv.slice(2);
++const state = JSON.parse(fs.readFileSync(file, "utf8"));
++state.last_commit = headCommit;
++state.last_e2e_result = "pass";
++state.session_started_commit = "";
++state.session_started_at = "";
++state.next_action = "run harness-start-session";
++state.updated_at = now;
++state.tool = tool;
++fs.writeFileSync(file, JSON.stringify(state, null, 2) + "\n");
++NODE
++
++harness_append_progress "Session end task: ${current_task_id:-N/A} tool: $TOOL commit: $head_commit e2e: pass"
++echo "Session ended successfully. commit=$head_commit"
+diff --git a/.specify/scripts/bash/harness-verify-e2e.sh b/.specify/scripts/bash/harness-verify-e2e.sh
+new file mode 100755
+index 0000000..6a9754a
+--- /dev/null
++++ b/.specify/scripts/bash/harness-verify-e2e.sh
+@@ -0,0 +1,45 @@
++#!/usr/bin/env bash
++
++set -euo pipefail
++
++SCRIPT_DIR="$(CDPATH="" cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
++source "$SCRIPT_DIR/harness-lib.sh"
++
++FEATURE=""
++
++while [[ $# -gt 0 ]]; do
++  case "$1" in
++    --feature)
++      FEATURE="${2:-}"
++      shift 2
++      ;;
++    --help|-h)
++      cat <<'EOF'
++Usage: harness-verify-e2e.sh [--feature <feature-id>]
++EOF
++      exit 0
++      ;;
++    *)
++      harness_die "Unknown option: $1"
++      ;;
++  esac
++done
++
++harness_init_context "$FEATURE"
++harness_require_feature_dir
++
++cd "$HARNESS_REPO_ROOT"
++
++if [[ -n "${HARNESS_E2E_CMD:-}" ]]; then
++  echo "[harness] run custom e2e command: $HARNESS_E2E_CMD"
++  bash -lc "$HARNESS_E2E_CMD"
++  exit $?
++fi
++
++if [[ -f "frontend/package.json" ]] && grep -q '"test:e2e:smoke"' "frontend/package.json"; then
++  echo "[harness] run frontend e2e smoke suite"
++  npm --prefix frontend run test:e2e:smoke
++  exit $?
++fi
++
++harness_die "No e2e command configured. Set HARNESS_E2E_CMD or add frontend script test:e2e:smoke."
+diff --git a/frontend/playwright.smoke.config.mjs b/frontend/playwright.smoke.config.mjs
+new file mode 100644
+index 0000000..cb9df66
+--- /dev/null
++++ b/frontend/playwright.smoke.config.mjs
+@@ -0,0 +1,31 @@
++import { defineConfig, devices } from "@playwright/test";
++
++const port = Number(process.env.E2E_PORT || 4173);
++const host = process.env.E2E_HOST || "127.0.0.1";
++const baseURL = process.env.E2E_BASE_URL || `http://${host}:${port}`;
++
++export default defineConfig({
++  testDir: "./tests/e2e",
++  timeout: 60_000,
++  expect: { timeout: 10_000 },
++  retries: 0,
++  fullyParallel: false,
++  workers: 1,
++  reporter: "line",
++  use: {
++    baseURL,
++    trace: "retain-on-failure",
++  },
++  webServer: {
++    command: `npm run dev -- --host ${host} --port ${port}`,
++    url: baseURL,
++    reuseExistingServer: true,
++    timeout: 120_000,
++  },
++  projects: [
++    {
++      name: "chromium",
++      use: { ...devices["Desktop Chrome"] },
++    },
++  ],
++});
+diff --git a/frontend/tests/e2e/smoke.spec.mjs b/frontend/tests/e2e/smoke.spec.mjs
+new file mode 100644
+index 0000000..e816385
+--- /dev/null
++++ b/frontend/tests/e2e/smoke.spec.mjs
+@@ -0,0 +1,11 @@
++import { expect, test } from "@playwright/test";
++
++test("home page renders meaningful content", async ({ page }) => {
++  const response = await page.goto("/");
++  expect(response).not.toBeNull();
++  expect(response.ok()).toBeTruthy();
++
++  await expect(page.locator("body")).toBeVisible();
++  const bodyText = (await page.locator("body").innerText()).trim();
++  expect(bodyText.length).toBeGreaterThan(20);
++});
+diff --git a/tests/specify/harness_scripts_test.sh b/tests/specify/harness_scripts_test.sh
+new file mode 100755
+index 0000000..42a1214
+--- /dev/null
++++ b/tests/specify/harness_scripts_test.sh
+@@ -0,0 +1,118 @@
++#!/usr/bin/env bash
++
++set -euo pipefail
++
++ROOT_DIR="$(CDPATH="" cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
++WORK_DIR="$(mktemp -d)"
++trap 'rm -rf "$WORK_DIR"' EXIT
++
++assert_file() {
++  local path="$1"
++  if [[ ! -f "$path" ]]; then
++    echo "assertion failed: expected file $path"
++    exit 1
++  fi
++}
++
++assert_contains() {
++  local path="$1"
++  local pattern="$2"
++  if ! grep -q "$pattern" "$path"; then
++    echo "assertion failed: expected '$pattern' in $path"
++    exit 1
++  fi
++}
++
++mkdir -p "$WORK_DIR/.specify/scripts/bash"
++cp "$ROOT_DIR/.specify/scripts/bash/"*.sh "$WORK_DIR/.specify/scripts/bash/"
++chmod +x "$WORK_DIR/.specify/scripts/bash/"*.sh
++
++mkdir -p "$WORK_DIR/specs/001-harness-test"
++cat >"$WORK_DIR/specs/001-harness-test/spec.md" <<'EOF'
++# Test Spec
++
++### User Story 1 - Core flow (Priority: P1)
++### User Story 2 - Backup flow (Priority: P2)
++EOF
++
++cat >"$WORK_DIR/specs/001-harness-test/tasks.md" <<'EOF'
++- [ ] T001 [US1] First task
++- [ ] T002 [US2] Second task
++EOF
++
++cat >"$WORK_DIR/specs/001-harness-test/plan.md" <<'EOF'
++# Test Plan
++EOF
++
++(
++  cd "$WORK_DIR"
++  git init >/dev/null
++  git config user.email "harness-test@example.com"
++  git config user.name "Harness Test"
++  git add .
++  git commit -m "init" >/dev/null
++)
++
++export SPECIFY_FEATURE="001-harness-test"
++
++(
++  cd "$WORK_DIR"
++  ./.specify/scripts/bash/harness-init.sh --feature "001-harness-test" --tool "codex"
++)
++
++HARNESS_DIR="$WORK_DIR/specs/001-harness-test/harness"
++assert_file "$HARNESS_DIR/feature_list.json"
++assert_file "$HARNESS_DIR/progress.log.md"
++assert_file "$HARNESS_DIR/session_state.json"
++assert_file "$HARNESS_DIR/init.sh"
++
++cat >"$HARNESS_DIR/feature_list.json" <<'EOF'
++[
++  {"id":"F-001","priority":"P2","status":"failing","description":"p2"},
++  {"id":"F-002","priority":"P1","status":"in_progress","description":"p1 in progress"},
++  {"id":"F-003","priority":"P1","status":"failing","description":"p1 fail"}
++]
++EOF
++
++pick_output="$(
++  cd "$WORK_DIR"
++  ./.specify/scripts/bash/harness-pick-next.sh --feature "001-harness-test"
++)"
++if [[ "$pick_output" != *"F-003"* ]]; then
++  echo "assertion failed: expected next feature F-003, got: $pick_output"
++  exit 1
++fi
++
++(
++  cd "$WORK_DIR"
++  ./.specify/scripts/bash/harness-start-session.sh --feature "001-harness-test" --tool "codex"
++)
++
++set +e
++(
++  cd "$WORK_DIR"
++  HARNESS_E2E_CMD=true ./.specify/scripts/bash/harness-end-session.sh --feature "001-harness-test" --tool "codex"
++)
++end_rc=$?
++set -e
++if [[ $end_rc -eq 0 ]]; then
++  echo "assertion failed: expected end-session to fail without new commit"
++  exit 1
++fi
++
++(
++  cd "$WORK_DIR"
++  echo "progress change" >> specs/001-harness-test/progress.txt
++  git add .
++  git commit -m "progress" >/dev/null
++)
++
++(
++  cd "$WORK_DIR"
++  HARNESS_E2E_CMD=true ./.specify/scripts/bash/harness-end-session.sh --feature "001-harness-test" --tool "codex"
++)
++
++assert_contains "$HARNESS_DIR/session_state.json" "\"last_e2e_result\": \"pass\""
++assert_contains "$HARNESS_DIR/progress.log.md" "Session end"
++
++echo "harness scripts test: PASS"
