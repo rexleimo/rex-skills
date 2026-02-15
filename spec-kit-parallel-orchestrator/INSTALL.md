@@ -19,6 +19,7 @@ What it does automatically:
 - appends harness guidance to speckit prompts (`.codex`/`.claude`) in best-effort mode
 - installs/updates skill directory at `.codex/skills/spec-kit-parallel-orchestrator`
 - runs post-apply verification
+  - on non-feature branches (e.g. `main`), branch-sensitive `check-prerequisites` is auto-skipped
 - auto-rolls back on verification failure
 - auto-detects your git root (so subdirectory execution works)
 - if patch is already installed, still syncs skill/prompts (idempotent)

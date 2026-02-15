@@ -309,6 +309,7 @@ REPO_DIR="$(CDPATH="" cd "$REPO_DIR" && pwd)"
 if [[ -z "$SKILL_DEST" ]]; then
   SKILL_DEST="$REPO_DIR/.codex/skills/$SKILL_NAME"
 fi
+CURRENT_BRANCH="$(git -C "$REPO_DIR" rev-parse --abbrev-ref HEAD 2>/dev/null || true)"
 
 if ! git -C "$REPO_DIR" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
   err "target is not a git repo: $REPO_DIR"
@@ -415,7 +416,11 @@ if [[ "$PATCH_APPLIED" == "true" ]] && [[ "$SKIP_VERIFY" != "true" ]]; then
   fi
 
   if [[ -x "$REPO_DIR/.specify/scripts/bash/check-prerequisites.sh" ]]; then
-    "$REPO_DIR/.specify/scripts/bash/check-prerequisites.sh" --json --include-tasks >/dev/null || VERIFY_FAILED=1
+    if [[ "$CURRENT_BRANCH" =~ ^[0-9]{3}- ]]; then
+      "$REPO_DIR/.specify/scripts/bash/check-prerequisites.sh" --json --include-tasks >/dev/null || VERIFY_FAILED=1
+    else
+      warn "skip check-prerequisites on non-feature branch: ${CURRENT_BRANCH:-unknown}"
+    fi
   fi
 
   if [[ -f "$REPO_DIR/frontend/package.json" ]] && grep -q '"test:e2e:smoke"' "$REPO_DIR/frontend/package.json"; then

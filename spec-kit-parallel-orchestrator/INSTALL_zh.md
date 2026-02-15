@@ -19,6 +19,7 @@ curl -fsSL https://raw.githubusercontent.com/rexleimo/rex-skills/main/spec-kit-p
 - 以 best-effort 方式为 speckit prompts（`.codex`/`.claude`）追加 harness 指南
 - 安装/更新 `.codex/skills/spec-kit-parallel-orchestrator` skill 目录
 - 运行补丁后验证
+  - 若当前不是 feature 分支（如 `main`），会自动跳过带分支限制的 `check-prerequisites`
 - 验证失败时自动回滚
 - 自动识别 git 根目录（在子目录执行也可用）
 - 若补丁已安装，也会继续同步 skill/prompts（幂等）
