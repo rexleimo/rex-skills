@@ -16,10 +16,12 @@ What it does automatically:
 - runs `git apply --check` in `full` mode first
 - if `full` mode is incompatible, auto-falls back to `core` mode (installs harness scripts only)
 - applies patch
+- appends harness guidance to speckit prompts (`.codex`/`.claude`) in best-effort mode
+- installs/updates skill directory at `.codex/skills/spec-kit-parallel-orchestrator`
 - runs post-apply verification
 - auto-rolls back on verification failure
 - auto-detects your git root (so subdirectory execution works)
-- exits successfully if patch is already installed (idempotent)
+- if patch is already installed, still syncs skill/prompts (idempotent)
 
 From any arbitrary directory, install to a specific repo:
 
@@ -39,6 +41,9 @@ bash /path/to/rex-skills/spec-kit-parallel-orchestrator/scripts/install.sh --rep
 bash scripts/install.sh --repo /path/to/target --dry-run
 bash scripts/install.sh --repo /path/to/target --allow-dirty
 bash scripts/install.sh --repo /path/to/target --skip-verify
+bash scripts/install.sh --repo /path/to/target --skip-skill
+bash scripts/install.sh --repo /path/to/target --skip-prompts
+bash scripts/install.sh --repo /path/to/target --skill-ref main
 bash scripts/install.sh --repo /path/to/target --no-rollback
 bash scripts/install.sh --repo /path/to/target --patch-file ./patches/long-running-harness.full.patch
 ```
@@ -95,3 +100,6 @@ bash /path/to/rex-skills/spec-kit-parallel-orchestrator/scripts/uninstall.sh --r
 - In `core` mode, harness scripts are installed, while template/prompt/frontend package edits are skipped.
 - Configure your own gate command via `HARNESS_E2E_CMD`, for example:
   - `HARNESS_E2E_CMD="npm --prefix frontend run test:unit" .specify/scripts/bash/harness-end-session.sh --feature 001-my-feature`
+
+5. I only want patch, without skill/prompts
+- Add `--skip-skill --skip-prompts`.

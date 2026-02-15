@@ -16,10 +16,12 @@ curl -fsSL https://raw.githubusercontent.com/rexleimo/rex-skills/main/spec-kit-p
 - 先按 `full` 模式执行 `git apply --check`
 - 若 `full` 不兼容，自动降级到 `core` 模式（仅安装 harness 脚本）
 - 应用补丁
+- 以 best-effort 方式为 speckit prompts（`.codex`/`.claude`）追加 harness 指南
+- 安装/更新 `.codex/skills/spec-kit-parallel-orchestrator` skill 目录
 - 运行补丁后验证
 - 验证失败时自动回滚
 - 自动识别 git 根目录（在子目录执行也可用）
-- 已安装时会直接成功退出（幂等）
+- 若补丁已安装，也会继续同步 skill/prompts（幂等）
 
 如果你不在目标仓库目录，可显式指定路径：
 
@@ -39,6 +41,9 @@ bash /path/to/rex-skills/spec-kit-parallel-orchestrator/scripts/install.sh --rep
 bash scripts/install.sh --repo /path/to/target --dry-run
 bash scripts/install.sh --repo /path/to/target --allow-dirty
 bash scripts/install.sh --repo /path/to/target --skip-verify
+bash scripts/install.sh --repo /path/to/target --skip-skill
+bash scripts/install.sh --repo /path/to/target --skip-prompts
+bash scripts/install.sh --repo /path/to/target --skill-ref main
 bash scripts/install.sh --repo /path/to/target --no-rollback
 bash scripts/install.sh --repo /path/to/target --patch-file ./patches/long-running-harness.full.patch
 ```
@@ -95,3 +100,6 @@ bash /path/to/rex-skills/spec-kit-parallel-orchestrator/scripts/uninstall.sh --r
 - `core` 模式仅安装 harness 脚本，不修改模板、提示词和前端 package 相关文件。
 - 可通过 `HARNESS_E2E_CMD` 指定你自己的门禁命令，例如：
   - `HARNESS_E2E_CMD="npm --prefix frontend run test:unit" .specify/scripts/bash/harness-end-session.sh --feature 001-my-feature`
+
+5. 只想打补丁，不安装 skill/prompts
+- 加上 `--skip-skill --skip-prompts`。

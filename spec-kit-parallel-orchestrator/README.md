@@ -30,6 +30,7 @@ curl -fsSL https://raw.githubusercontent.com/rexleimo/rex-skills/main/spec-kit-p
 Installer behavior:
 - `full` mode first (apply all patch hunks)
 - auto-fallback to `core` mode when target repo diverges (install harness scripts only)
+- then sync skill + prompts by default (`.codex/skills` and speckit prompt files)
 
 You can also run from anywhere and pin target repo:
 
