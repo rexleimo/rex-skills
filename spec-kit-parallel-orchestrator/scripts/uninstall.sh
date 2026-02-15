@@ -5,6 +5,14 @@ set -euo pipefail
 DEFAULT_RAW_BASE="https://raw.githubusercontent.com/rexleimo/rex-skills/main/spec-kit-parallel-orchestrator"
 DEFAULT_PATCH_REL="patches/long-running-harness.full.patch"
 SCRIPT_PIPE_HINT="curl -fsSL https://raw.githubusercontent.com/rexleimo/rex-skills/main/spec-kit-parallel-orchestrator/scripts/uninstall.sh | bash -s --"
+CORE_INCLUDE_PATHS=(
+  ".specify/scripts/bash/harness-lib.sh"
+  ".specify/scripts/bash/harness-init.sh"
+  ".specify/scripts/bash/harness-pick-next.sh"
+  ".specify/scripts/bash/harness-start-session.sh"
+  ".specify/scripts/bash/harness-end-session.sh"
+  ".specify/scripts/bash/harness-verify-e2e.sh"
+)
 
 REPO_DIR="${HARNESS_REPO_DIR:-${TARGET_REPO:-}}"
 PATCH_FILE=""
@@ -13,6 +21,7 @@ DRY_RUN="false"
 CURL_RETRY_ARGS=(--retry 3 --retry-delay 1 --connect-timeout 15)
 
 log() { printf '[uninstall] %s\n' "$*"; }
+warn() { printf '[uninstall][warn] %s\n' "$*" >&2; }
 err() { printf '[uninstall][error] %s\n' "$*" >&2; }
 
 if curl --help all 2>/dev/null | grep -q -- '--retry-all-errors'; then
@@ -49,6 +58,30 @@ download_patch() {
   local url="$1"
   local dst="$2"
   curl -fsSL "${CURL_RETRY_ARGS[@]}" "$url" -o "$dst"
+}
+
+build_core_include_args() {
+  CORE_INCLUDE_ARGS=()
+  local p
+  for p in "${CORE_INCLUDE_PATHS[@]}"; do
+    CORE_INCLUDE_ARGS+=(--include="$p")
+  done
+}
+
+can_apply_full_patch() {
+  git -C "$REPO_DIR" apply --check --whitespace=nowarn "$PATCH_PATH" >/dev/null 2>&1
+}
+
+can_revert_full_patch() {
+  git -C "$REPO_DIR" apply --check -R --whitespace=nowarn "$PATCH_PATH" >/dev/null 2>&1
+}
+
+can_apply_core_patch() {
+  git -C "$REPO_DIR" apply --check --whitespace=nowarn "${CORE_INCLUDE_ARGS[@]}" "$PATCH_PATH" >/dev/null 2>&1
+}
+
+can_revert_core_patch() {
+  git -C "$REPO_DIR" apply --check -R --whitespace=nowarn "${CORE_INCLUDE_ARGS[@]}" "$PATCH_PATH" >/dev/null 2>&1
 }
 
 while [[ $# -gt 0 ]]; do
@@ -112,6 +145,7 @@ fi
 TMP_DIR="$(mktemp -d)"
 trap 'rm -rf "$TMP_DIR"' EXIT
 PATCH_PATH="$TMP_DIR/long-running-harness.full.patch"
+CORE_INCLUDE_ARGS=()
 
 if [[ -n "$PATCH_FILE" ]]; then
   if [[ ! -f "$PATCH_FILE" ]]; then
@@ -134,23 +168,39 @@ else
   fi
 fi
 
+build_core_include_args
+
 log "checking reverse patch..."
-if git -C "$REPO_DIR" apply --check -R --whitespace=nowarn "$PATCH_PATH"; then
-  log "reverse check passed"
+UNINSTALL_MODE=""
+if can_revert_full_patch; then
+  UNINSTALL_MODE="full"
+  log "reverse check passed (mode: full)"
+elif can_revert_core_patch; then
+  UNINSTALL_MODE="core"
+  log "reverse check passed (mode: core)"
 else
-  if git -C "$REPO_DIR" apply --check --whitespace=nowarn "$PATCH_PATH"; then
+  if can_apply_full_patch; then
     log "patch is not installed, nothing to uninstall"
     exit 0
   fi
+  if can_apply_core_patch; then
+    log "patch is not installed, nothing to uninstall"
+    exit 0
+  fi
+  warn "full/core reverse checks failed and forward checks are not clean"
   err "patch state is incompatible with current repo"
   exit 1
 fi
 
 if [[ "$DRY_RUN" == "true" ]]; then
-  log "dry-run complete, no file changed"
+  log "dry-run complete, no file changed (mode: ${UNINSTALL_MODE:-unknown})"
   exit 0
 fi
 
-log "reverting patch..."
-git -C "$REPO_DIR" apply -R --whitespace=nowarn "$PATCH_PATH"
-log "uninstall success"
+log "reverting patch (mode: ${UNINSTALL_MODE:-full})..."
+if [[ "$UNINSTALL_MODE" == "core" ]]; then
+  git -C "$REPO_DIR" apply -R --whitespace=nowarn "${CORE_INCLUDE_ARGS[@]}" "$PATCH_PATH"
+else
+  git -C "$REPO_DIR" apply -R --whitespace=nowarn "$PATCH_PATH"
+fi
+log "uninstall success (mode: ${UNINSTALL_MODE:-full})"

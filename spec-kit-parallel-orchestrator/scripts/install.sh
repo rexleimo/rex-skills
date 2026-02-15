@@ -5,6 +5,14 @@ set -euo pipefail
 DEFAULT_RAW_BASE="https://raw.githubusercontent.com/rexleimo/rex-skills/main/spec-kit-parallel-orchestrator"
 DEFAULT_PATCH_REL="patches/long-running-harness.full.patch"
 SCRIPT_PIPE_HINT="curl -fsSL https://raw.githubusercontent.com/rexleimo/rex-skills/main/spec-kit-parallel-orchestrator/scripts/install.sh | bash -s --"
+CORE_INCLUDE_PATHS=(
+  ".specify/scripts/bash/harness-lib.sh"
+  ".specify/scripts/bash/harness-init.sh"
+  ".specify/scripts/bash/harness-pick-next.sh"
+  ".specify/scripts/bash/harness-start-session.sh"
+  ".specify/scripts/bash/harness-end-session.sh"
+  ".specify/scripts/bash/harness-verify-e2e.sh"
+)
 
 REPO_DIR="${HARNESS_REPO_DIR:-${TARGET_REPO:-}}"
 PATCH_FILE=""
@@ -56,6 +64,30 @@ download_patch() {
   local url="$1"
   local dst="$2"
   curl -fsSL "${CURL_RETRY_ARGS[@]}" "$url" -o "$dst"
+}
+
+build_core_include_args() {
+  CORE_INCLUDE_ARGS=()
+  local p
+  for p in "${CORE_INCLUDE_PATHS[@]}"; do
+    CORE_INCLUDE_ARGS+=(--include="$p")
+  done
+}
+
+can_apply_full_patch() {
+  git -C "$REPO_DIR" apply --check --whitespace=nowarn "$PATCH_PATH" >/dev/null 2>&1
+}
+
+can_revert_full_patch() {
+  git -C "$REPO_DIR" apply --check -R --whitespace=nowarn "$PATCH_PATH" >/dev/null 2>&1
+}
+
+can_apply_core_patch() {
+  git -C "$REPO_DIR" apply --check --whitespace=nowarn "${CORE_INCLUDE_ARGS[@]}" "$PATCH_PATH" >/dev/null 2>&1
+}
+
+can_revert_core_patch() {
+  git -C "$REPO_DIR" apply --check -R --whitespace=nowarn "${CORE_INCLUDE_ARGS[@]}" "$PATCH_PATH" >/dev/null 2>&1
 }
 
 while [[ $# -gt 0 ]]; do
@@ -143,6 +175,7 @@ fi
 TMP_DIR="$(mktemp -d)"
 trap 'rm -rf "$TMP_DIR"' EXIT
 PATCH_PATH="$TMP_DIR/long-running-harness.full.patch"
+CORE_INCLUDE_ARGS=()
 
 if [[ -n "$PATCH_FILE" ]]; then
   if [[ ! -f "$PATCH_FILE" ]]; then
@@ -167,26 +200,45 @@ else
   fi
 fi
 
+build_core_include_args
+
 log "checking patch compatibility..."
-if git -C "$REPO_DIR" apply --check --whitespace=nowarn "$PATCH_PATH"; then
-  log "patch check passed"
+INSTALL_MODE=""
+if can_apply_full_patch; then
+  INSTALL_MODE="full"
+  log "patch check passed (mode: full)"
 else
-  if git -C "$REPO_DIR" apply --check -R --whitespace=nowarn "$PATCH_PATH"; then
-    log "patch is already installed, nothing to do"
+  if can_revert_full_patch; then
+    log "patch is already installed (mode: full), nothing to do"
     exit 0
   fi
-  err "patch is not applicable to current repo state"
-  exit 1
+
+  warn "full patch is not applicable; trying compatibility mode (core harness files only)"
+  if can_apply_core_patch; then
+    INSTALL_MODE="core"
+    log "patch check passed (mode: core)"
+    warn "compatibility mode skips template/prompt/frontend/package changes; configure HARNESS_E2E_CMD if needed"
+  elif can_revert_core_patch; then
+    log "patch is already installed (mode: core), nothing to do"
+    exit 0
+  else
+    err "patch is not applicable to current repo state (full/core checks both failed)"
+    exit 1
+  fi
 fi
 
 if [[ "$DRY_RUN" == "true" ]]; then
-  log "dry-run complete, no file changed"
+  log "dry-run complete, no file changed (mode: ${INSTALL_MODE:-unknown})"
   exit 0
 fi
 
-log "applying patch..."
-git -C "$REPO_DIR" apply --whitespace=nowarn "$PATCH_PATH"
-log "patch applied"
+log "applying patch (mode: ${INSTALL_MODE:-full})..."
+if [[ "$INSTALL_MODE" == "core" ]]; then
+  git -C "$REPO_DIR" apply --whitespace=nowarn "${CORE_INCLUDE_ARGS[@]}" "$PATCH_PATH"
+else
+  git -C "$REPO_DIR" apply --whitespace=nowarn "$PATCH_PATH"
+fi
+log "patch applied (mode: ${INSTALL_MODE:-full})"
 
 if [[ "$SKIP_VERIFY" == "true" ]]; then
   log "skip verify enabled"
@@ -233,4 +285,4 @@ if [[ $VERIFY_FAILED -ne 0 ]]; then
 fi
 
 log "all checks passed"
-log "install success"
+log "install success (mode: ${INSTALL_MODE:-full})"

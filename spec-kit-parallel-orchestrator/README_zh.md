@@ -27,6 +27,10 @@ npx skills add https://github.com/rexleimo/rex-skills/tree/main/spec-kit-paralle
 curl -fsSL https://raw.githubusercontent.com/rexleimo/rex-skills/main/spec-kit-parallel-orchestrator/scripts/install.sh | bash -s --
 ```
 
+安装器行为：
+- 优先尝试 `full` 模式（应用完整补丁）
+- 若目标仓库存在版本漂移，自动降级到 `core` 模式（仅安装 harness 脚本）
+
 如果不在目标仓库目录，可显式指定：
 
 ```bash

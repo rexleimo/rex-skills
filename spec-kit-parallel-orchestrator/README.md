@@ -27,6 +27,10 @@ Recommended one-command installer:
 curl -fsSL https://raw.githubusercontent.com/rexleimo/rex-skills/main/spec-kit-parallel-orchestrator/scripts/install.sh | bash -s --
 ```
 
+Installer behavior:
+- `full` mode first (apply all patch hunks)
+- auto-fallback to `core` mode when target repo diverges (install harness scripts only)
+
 You can also run from anywhere and pin target repo:
 
 ```bash

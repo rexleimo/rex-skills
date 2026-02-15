@@ -13,7 +13,8 @@ curl -fsSL https://raw.githubusercontent.com/rexleimo/rex-skills/main/spec-kit-p
 What it does automatically:
 - checks target is a git + spec-kit repo (`.specify/` exists)
 - downloads patch
-- runs `git apply --check`
+- runs `git apply --check` in `full` mode first
+- if `full` mode is incompatible, auto-falls back to `core` mode (installs harness scripts only)
 - applies patch
 - runs post-apply verification
 - auto-rolls back on verification failure
@@ -88,3 +89,9 @@ bash /path/to/rex-skills/spec-kit-parallel-orchestrator/scripts/uninstall.sh --r
 
 3. frontend e2e check fails
 - Install project deps first, or use `--skip-verify` and verify manually later.
+
+4. installer logs `mode: core`
+- This is expected for repos with customized spec-kit templates/prompts or frontend lockfiles.
+- In `core` mode, harness scripts are installed, while template/prompt/frontend package edits are skipped.
+- Configure your own gate command via `HARNESS_E2E_CMD`, for example:
+  - `HARNESS_E2E_CMD="npm --prefix frontend run test:unit" .specify/scripts/bash/harness-end-session.sh --feature 001-my-feature`

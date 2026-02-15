@@ -13,7 +13,8 @@ curl -fsSL https://raw.githubusercontent.com/rexleimo/rex-skills/main/spec-kit-p
 脚本会自动：
 - 检查目标是否为 git + spec-kit 项目（存在 `.specify/`）
 - 下载补丁
-- 执行 `git apply --check`
+- 先按 `full` 模式执行 `git apply --check`
+- 若 `full` 不兼容，自动降级到 `core` 模式（仅安装 harness 脚本）
 - 应用补丁
 - 运行补丁后验证
 - 验证失败时自动回滚
@@ -88,3 +89,9 @@ bash /path/to/rex-skills/spec-kit-parallel-orchestrator/scripts/uninstall.sh --r
 
 3. 前端 e2e 校验失败
 - 先安装依赖；或使用 `--skip-verify`，后续手动补验。
+
+4. 安装日志出现 `mode: core`
+- 这是预期行为，常见于目标仓库对 spec-kit 模板/提示词或前端 lockfile 做过定制。
+- `core` 模式仅安装 harness 脚本，不修改模板、提示词和前端 package 相关文件。
+- 可通过 `HARNESS_E2E_CMD` 指定你自己的门禁命令，例如：
+  - `HARNESS_E2E_CMD="npm --prefix frontend run test:unit" .specify/scripts/bash/harness-end-session.sh --feature 001-my-feature`
