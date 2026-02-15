@@ -24,7 +24,13 @@ npx skills add https://github.com/rexleimo/rex-skills/tree/main/spec-kit-paralle
 Recommended one-command installer:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/rexleimo/rex-skills/main/spec-kit-parallel-orchestrator/scripts/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/rexleimo/rex-skills/main/spec-kit-parallel-orchestrator/scripts/install.sh | bash -s --
+```
+
+You can also run from anywhere and pin target repo:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/rexleimo/rex-skills/main/spec-kit-parallel-orchestrator/scripts/install.sh | bash -s -- --repo /path/to/your/project
 ```
 
 Local installer (from this repo checkout):

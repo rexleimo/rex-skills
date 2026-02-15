@@ -4,10 +4,10 @@ This guide provides a beginner-friendly one-click installer, with a manual `git 
 
 ## Fastest Path (recommended)
 
-From your **target project root**:
+Run from your **target repo** (root or any subdirectory):
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/rexleimo/rex-skills/main/spec-kit-parallel-orchestrator/scripts/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/rexleimo/rex-skills/main/spec-kit-parallel-orchestrator/scripts/install.sh | bash -s --
 ```
 
 What it does automatically:
@@ -17,6 +17,14 @@ What it does automatically:
 - applies patch
 - runs post-apply verification
 - auto-rolls back on verification failure
+- auto-detects your git root (so subdirectory execution works)
+- exits successfully if patch is already installed (idempotent)
+
+From any arbitrary directory, install to a specific repo:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/rexleimo/rex-skills/main/spec-kit-parallel-orchestrator/scripts/install.sh | bash -s -- --repo /path/to/target-repo
+```
 
 ## Local Script Mode (if you cloned rex-skills)
 
@@ -60,7 +68,7 @@ npm --prefix frontend run test:e2e:smoke -- --list
 One-click uninstall:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/rexleimo/rex-skills/main/spec-kit-parallel-orchestrator/scripts/uninstall.sh | bash
+curl -fsSL https://raw.githubusercontent.com/rexleimo/rex-skills/main/spec-kit-parallel-orchestrator/scripts/uninstall.sh | bash -s --
 ```
 
 Or local script:
@@ -75,7 +83,8 @@ bash /path/to/rex-skills/spec-kit-parallel-orchestrator/scripts/uninstall.sh --r
 - Commit/stash first, or use `--allow-dirty`.
 
 2. `target does not look like a spec-kit repo`
-- Ensure `.specify/` exists in target root.
+- Ensure target repo has `.specify/`.
+- If you are not inside target repo, pass `--repo /path/to/target-repo`.
 
 3. frontend e2e check fails
 - Install project deps first, or use `--skip-verify` and verify manually later.

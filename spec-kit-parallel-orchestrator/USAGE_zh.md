@@ -3,7 +3,7 @@
 ## 0. 快速安装
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/rexleimo/rex-skills/main/spec-kit-parallel-orchestrator/scripts/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/rexleimo/rex-skills/main/spec-kit-parallel-orchestrator/scripts/install.sh | bash -s --
 ```
 
 ## 1. Harness 增加了什么

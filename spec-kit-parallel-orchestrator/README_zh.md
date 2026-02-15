@@ -24,7 +24,13 @@ npx skills add https://github.com/rexleimo/rex-skills/tree/main/spec-kit-paralle
 推荐一键安装（最简单）：
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/rexleimo/rex-skills/main/spec-kit-parallel-orchestrator/scripts/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/rexleimo/rex-skills/main/spec-kit-parallel-orchestrator/scripts/install.sh | bash -s --
+```
+
+如果不在目标仓库目录，可显式指定：
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/rexleimo/rex-skills/main/spec-kit-parallel-orchestrator/scripts/install.sh | bash -s -- --repo /path/to/your/project
 ```
 
 本地脚本安装（你已 clone rex-skills）：

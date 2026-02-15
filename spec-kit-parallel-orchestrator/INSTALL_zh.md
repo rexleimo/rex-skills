@@ -4,10 +4,10 @@
 
 ## 最快方式（推荐）
 
-在**目标项目根目录**执行：
+在**目标仓库内**执行（根目录或任意子目录都可以）：
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/rexleimo/rex-skills/main/spec-kit-parallel-orchestrator/scripts/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/rexleimo/rex-skills/main/spec-kit-parallel-orchestrator/scripts/install.sh | bash -s --
 ```
 
 脚本会自动：
@@ -17,6 +17,14 @@ curl -fsSL https://raw.githubusercontent.com/rexleimo/rex-skills/main/spec-kit-p
 - 应用补丁
 - 运行补丁后验证
 - 验证失败时自动回滚
+- 自动识别 git 根目录（在子目录执行也可用）
+- 已安装时会直接成功退出（幂等）
+
+如果你不在目标仓库目录，可显式指定路径：
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/rexleimo/rex-skills/main/spec-kit-parallel-orchestrator/scripts/install.sh | bash -s -- --repo /path/to/target-repo
+```
 
 ## 本地脚本模式（已 clone rex-skills）
 
@@ -60,7 +68,7 @@ npm --prefix frontend run test:e2e:smoke -- --list
 一键卸载：
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/rexleimo/rex-skills/main/spec-kit-parallel-orchestrator/scripts/uninstall.sh | bash
+curl -fsSL https://raw.githubusercontent.com/rexleimo/rex-skills/main/spec-kit-parallel-orchestrator/scripts/uninstall.sh | bash -s --
 ```
 
 或本地脚本：
@@ -75,7 +83,8 @@ bash /path/to/rex-skills/spec-kit-parallel-orchestrator/scripts/uninstall.sh --r
 - 先提交/暂存，或者加 `--allow-dirty`。
 
 2. `target does not look like a spec-kit repo`
-- 确认目标根目录包含 `.specify/`。
+- 确认目标仓库包含 `.specify/`。
+- 如果当前不在目标仓库内，请使用 `--repo /path/to/target-repo`。
 
 3. 前端 e2e 校验失败
 - 先安装依赖；或使用 `--skip-verify`，后续手动补验。
