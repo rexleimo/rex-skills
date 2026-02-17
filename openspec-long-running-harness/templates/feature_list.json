@@ -1,0 +1,58 @@
+{
+  "project": "<project-name>",
+  "created": "<timestamp>",
+  "updated": "<timestamp>",
+  "features": [
+    {
+      "id": "F001",
+      "category": "functional",
+      "priority": "P1",
+      "description": "Feature description here",
+      "steps": [
+        "Step 1: First implementation step",
+        "Step 2: Second implementation step",
+        "Step 3: Third implementation step"
+      ],
+      "status": "pending",
+      "depends_on": [],
+      "blocked_reason": null,
+      "started_at": null,
+      "completed_at": null,
+      "commits": []
+    },
+    {
+      "id": "F002",
+      "category": "api",
+      "priority": "P1",
+      "description": "Another feature description",
+      "steps": [
+        "Step 1: API design",
+        "Step 2: Implementation",
+        "Step 3: Testing"
+      ],
+      "status": "pending",
+      "depends_on": ["F001"],
+      "blocked_reason": null,
+      "started_at": null,
+      "completed_at": null,
+      "commits": []
+    },
+    {
+      "id": "F003",
+      "category": "ui",
+      "priority": "P2",
+      "description": "UI component implementation",
+      "steps": [
+        "Step 1: Component design",
+        "Step 2: Styling",
+        "Step 3: Integration"
+      ],
+      "status": "pending",
+      "depends_on": [],
+      "blocked_reason": null,
+      "started_at": null,
+      "completed_at": null,
+      "commits": []
+    }
+  ]
+}

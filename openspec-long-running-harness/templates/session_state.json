@@ -1,0 +1,10 @@
+{
+  "session_id": 0,
+  "tool": "",
+  "started_at": null,
+  "current_feature": null,
+  "start_commit": null,
+  "end_commit": null,
+  "e2e_result": null,
+  "status": "idle"
+}
