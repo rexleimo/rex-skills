@@ -1,101 +1,97 @@
 ---
 name: spec-kit-parallel-orchestrator
-description: 用于 spec kit 工作流编排。 当用户提到 spec kit、输入 /speckit.* 或 /prompts:speckit.* 命令、请求 spec kit workflow prompt、需求拆解执行方案或多代理协作时必须触发。该技能要求先进行阶段与依赖校验，再将任务拆分为 3-6 个子任务并行执行，统一汇总后递归进入下一轮。
+description: Parallel orchestration skill for Spec Kit workflows. When users mention spec kit, enter /speckit.* or /prompts:speckit.* commands, request spec kit workflow prompt, or need multi-agent collaboration, this skill must be triggered. It validates stages and dependencies first, then splits tasks into 3-6 parallel subtasks, aggregates results, and recursively proceeds to the next round.
 ---
 
 # Spec Kit Parallel Orchestrator
 
-## 概述
+## Overview
 
-将 spec kit 工作流从“单线程执行”切换为“3-6 个 Sub Agent 并行 + 阶段汇总”。
-优先并行无依赖节点，严格串行强依赖链，目标是缩短端到端耗时并保持输出一致性。
+Transforms spec kit workflows from "single-threaded execution" to "3-6 Sub Agent parallel + stage aggregation". Prioritizes parallel execution for independent nodes, strictly serial execution for strong dependency chains.
 
-## 触发条件（必须命中）
+## Trigger Conditions (Must Match)
 
-满足任一条件就必须调用本技能：
+Invoke this skill when any condition is met:
 
-1. 用户明确输入 `/speckit.` 开头的命令，例如 `/speckit.specify`、`/speckit.plan`、`/speckit.tasks`、`/speckit.implement`。
-   Codex CLI 兼容形式 `/prompts:speckit.` 也必须命中，例如 `/prompts:speckit.specify`、`/prompts:speckit.plan`。
-2. 用户明确提到“spec kit 工作流 / workflow prompt / spec-driven”并要求拆解、计划、实现。
-3. 用户要求“按 spec kit 方式并行拆任务”“多代理并发 + 阶段汇总”。
+1. User explicitly enters `/speckit.` prefixed commands, e.g., `/speckit.specify`, `/speckit.plan`, `/speckit.tasks`, `/speckit.implement`
+2. Codex CLI compatible form `/prompts:speckit.` also matches
+3. User mentions "spec kit workflow / spec-driven" and requests breakdown, planning, implementation
+4. User requests "parallel task splitting" or "multi-agent concurrent + stage aggregation"
 
-不满足以上条件时，回到通用流程；但若用户已明确提到 spec kit，不得降级为普通串行问答。
+## State Machine
 
-## 官方语义对齐（github/spec-kit）
+```
+pending → in_progress → verifying → passing
+               ↓              ↓
+           blocked  ←  failed
+```
 
-1. 推荐阶段顺序：`constitution -> specify -> clarify -> plan -> tasks -> implement`。
-2. `/speckit.tasks`（Codex CLI 常见 `/prompts:speckit.tasks`）的并行语义是“受控并行”：只有可并行任务可并发，依赖链必须串行。
-3. `/speckit.implement`（Codex CLI 常见 `/prompts:speckit.implement`）必须遵循任务依赖关系，不能跨越前置阶段直接强行执行。
-4. 当用户直接跳到后置阶段时，先报告前置缺失，再给出最短补齐路径。
+| Status | Trigger |
+|--------|---------|
+| `pending` | Initial state |
+| `in_progress` | `harness-start.sh` selects task |
+| `verifying` | `harness-end.sh` begins verification |
+| `passing` | All gates passed |
+| `failed` | E2E test failed |
+| `blocked` | Dependency incomplete or environment check failed |
 
-## 执行规则
+## Harness Artifacts
 
-1. 先做阶段校验与依赖分析，标出可并行与必须串行节点。
-2. 首轮默认拆为 **3-6** 个子任务；中等复杂度默认 3 个，复杂且边界清晰时扩展到 4-6 个。
-3. 每个子任务必须指定：目标、输入、输出、边界、负责文件范围。
-4. 仅对“可并行节点”（等价于 spec kit 语义中的 `[P]`）并发执行。
-5. 子任务之间不得存在写冲突；若冲突不可避免，仅该部分改为串行。
-6. 所有并行子任务完成后，统一汇总为阶段结果，再决定是否进入下一轮拆分。
+```
+specs/harness/
+├── feature_list.json     # Feature definitions + status
+├── progress.log.md       # Session history
+├── session_state.json    # Current context
+└── init.sh               # Environment check
+```
 
-## 标准流程
+## Stage Alignment (github/spec-kit)
 
-### 第 1 步：任务建模
+1. Stage order: `constitution -> specify -> clarify -> plan -> tasks -> implement`
+2. `/speckit.tasks` parallel semantics: only parallelizable tasks run concurrently
+3. `/speckit.implement` must respect task dependencies
 
-- 明确当前处于 spec kit 的哪个阶段，检查前置产物是否存在。
-- 提炼最终目标与验收条件。
-- 识别依赖链（例如 A→B→C）与并行块（例如 D/E/F 可同时执行）。
-- 若可并行块不足 3 个，继续细化到可独立交付的粒度。
+## Execution Rules
 
-### 第 2 步：并行拆分（3-6）
+1. Validate stage and dependency analysis first
+2. Split into **3-6** subtasks (3 for medium, 4-6 for complex)
+3. Each subtask specifies: goal, input, output, boundary, file scope
+4. Only parallelizable nodes execute concurrently
+5. No write conflicts between subtasks
+6. Aggregate results, then proceed to next round
 
-- 生成 3-6 个 Sub Agent 任务卡，每张任务卡都必须可独立完成。
-- 任务卡要包含：
-  - 任务标题
-  - 上下文输入
-  - 预期产出
-  - 禁止修改范围（避免冲突）
-  - 完成判定标准
+## Gate Enforcement
 
-### 第 3 步：并行执行
+| Gate | Verification |
+|------|--------------|
+| Working Tree Clean | `git status` |
+| New Commit Exists | Compare commits |
+| E2E Passed | Custom command |
 
-- 通过并行调度同时启动全部无依赖 Sub Agent。
-- 对共享资源加约束：同文件同区域禁止并行写入。
-- 发现阻塞时仅重排受影响子任务，不中断其他并行任务。
+## Output Template
 
-### 第 4 步：汇总与裁决
+Each round outputs:
+1. Parallel task list (3-6)
+2. Completion status and outputs
+3. Conflicts/blockers
+4. Aggregation conclusion
+5. Next round plan
 
-- 等待当前轮全部 Sub Agent 返回。
-- 做一致性检查：接口/数据结构/命名/约束是否对齐。
-- 合并为阶段结论，输出：
-  - 已完成事项
-  - 未解决阻塞
-  - 风险点与影响范围
-  - 下一轮计划（继续并行或转串行）
+## Scripts Reference
 
-### 第 5 步：递归迭代
+| Script | Purpose |
+|--------|---------|
+| `harness-lib.sh` | Common functions |
+| `harness-init.sh` | Initialize |
+| `harness-start.sh` | Start session |
+| `harness-end.sh` | End session |
+| `harness-pick-next.sh` | Select task |
+| `harness-commit.sh` | Commit progress |
+| `harness-verify-e2e.sh` | E2E verify |
+| `harness-status.sh` | Status view |
 
-- 若仍有未完成目标，按同样规则开启下一轮 3-6 子任务并行。
-- 直到满足验收条件后结束。
+## References
 
-## 决策准则
-
-- 遇到强依赖链时，必须串行，不强行并行化。
-- 遇到同文件重叠修改时，优先按“文件/模块边界”重拆任务。
-- 若任务规模很小（1-2 个动作即可完成），不必硬拆到 3 个。
-- 若用户使用 `/speckit.*` 或 `/prompts:speckit.*` 但缺少前置阶段产物，先补阶段而不是直接执行后置命令。
-- 任何一轮汇总后都要给出“是否继续并行”的明确判断。
-
-## 输出模板
-
-每轮汇总统一输出以下结构：
-
-1. 本轮并行任务列表（3-6）
-2. 每个任务的完成状态与关键产出
-3. 冲突/阻塞与处理动作
-4. 汇总结论
-5. 下一轮计划（含是否继续并行）
-
-## 参考示例
-
-- 需要可直接复用的提示词时，读取 `references/examples.md`。
-- 该文件包含：基础模板、代码实现模板、文档分析模板、失败重试模板（均为 3-6 子代理并行 + 汇总）。
+- `references/examples.md` - Prompt templates
+- `references/best-practices.md` - Best practices
+- [Anthropic: Effective Harnesses](https://www.anthropic.com/engineering/effective-harnesses-for-long-running-agents)

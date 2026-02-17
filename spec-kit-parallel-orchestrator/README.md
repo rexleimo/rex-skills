@@ -1,74 +1,81 @@
 # Spec Kit Parallel Orchestrator
 
-Parallel orchestration skill for Spec Kit workflows. This skill now ships with a **patch-based long-running harness** so other projects can adopt the same multi-session execution pattern (`initializer + incremental sessions + commit/e2e gate`).
+Parallel orchestration skill for Spec Kit workflows with long-running harness support.
 
-## Features
-
-- Parallel decomposition (3-6 sub-tasks) with dependency-safe execution.
-- Stage-aware semantics aligned with Spec Kit (`constitution -> specify -> clarify -> plan -> tasks -> implement`).
-- Patch-based distribution for cross-project adoption.
-- Long-running harness contract:
-  - `harness/feature_list.json`
-  - `harness/progress.log.md`
-  - `harness/session_state.json`
-  - `harness/init.sh`
-
-## Install Skill
+## Install
 
 ```bash
 npx skills add https://github.com/rexleimo/rex-skills/tree/main/spec-kit-parallel-orchestrator
 ```
 
-## Install Patch (for your own project)
+## Features
 
-Recommended one-command installer:
+- **Parallel decomposition** (3-6 sub-tasks) with dependency-safe execution
+- **Stage-aware semantics** aligned with Spec Kit (`constitution -> specify -> clarify -> plan -> tasks -> implement`)
+- **Long-running harness** with gate enforcement
+- **State persistence** across sessions
 
-```bash
-curl -fsSL https://raw.githubusercontent.com/rexleimo/rex-skills/main/spec-kit-parallel-orchestrator/scripts/install.sh | bash -s --
+## Harness Scripts
+
+After installation, use these scripts in your project:
+
+| Script | Purpose |
+|--------|---------|
+| `harness-init.sh` | Initialize harness directory |
+| `harness-start.sh` | Start a new session |
+| `harness-end.sh` | End session with gate enforcement |
+| `harness-pick-next.sh` | Select next feature |
+| `harness-commit.sh` | Commit progress |
+| `harness-verify-e2e.sh` | Run E2E verification |
+| `harness-status.sh` | Display status |
+
+## Harness Artifacts
+
+```
+specs/harness/
+├── feature_list.json     # Feature definitions + status
+├── progress.log.md       # Session history (human-readable)
+├── session_state.json    # Current context (machine-readable)
+├── init.sh               # Environment check script
+└── .harness-config.json  # Configuration
 ```
 
-Installer behavior:
-- `full` mode first (apply all patch hunks)
-- auto-fallback to `core` mode when target repo diverges (install harness scripts only)
-- then sync skill + prompts by default (`.codex/skills` and speckit prompt files)
+## State Machine
 
-You can also run from anywhere and pin target repo:
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/rexleimo/rex-skills/main/spec-kit-parallel-orchestrator/scripts/install.sh | bash -s -- --repo /path/to/your/project
+```
+pending → in_progress → verifying → passing
+               ↓              ↓
+           blocked  ←  failed
 ```
 
-Local installer (from this repo checkout):
+## Gate Enforcement
+
+Each session must pass these gates:
+
+1. **Working Tree Clean** - All changes committed
+2. **New Commit** - At least one commit since session start
+3. **E2E Passed** - End-to-end tests pass
+
+## Quick Start
 
 ```bash
-bash ./scripts/install.sh --repo /path/to/your/project
+# 1. Initialize harness
+./scripts/harness-init.sh "my-project"
+
+# 2. Edit features
+vim specs/harness/feature_list.json
+
+# 3. Start session
+./scripts/harness-start.sh
+
+# 4. Implement feature...
+
+# 5. End session (runs gates)
+./scripts/harness-end.sh
 ```
 
-Advanced/manual mode (`git apply`) from your target project root:
+## References
 
-```bash
-git apply --check path/to/long-running-harness.full.patch
-git apply path/to/long-running-harness.full.patch
-```
-
-Detailed guide:
-- English: [`INSTALL.md`](./INSTALL.md)
-- 简体中文: [`INSTALL_zh.md`](./INSTALL_zh.md)
-
-## Usage
-
-Detailed operational guide:
-- English: [`USAGE.md`](./USAGE.md)
-- 简体中文: [`USAGE_zh.md`](./USAGE_zh.md)
-
-## Patch Bundle
-
-- Patch file: [`patches/long-running-harness.full.patch`](./patches/long-running-harness.full.patch)
-- Manifest: [`patches/manifests/long-running-harness.full.manifest.json`](./patches/manifests/long-running-harness.full.manifest.json)
-- One-click scripts:
-  - [`scripts/install.sh`](./scripts/install.sh)
-  - [`scripts/uninstall.sh`](./scripts/uninstall.sh)
-  - [`scripts/make-patch.sh`](./scripts/make-patch.sh)
-- Tree examples:
-  - [`patches/examples/target-tree.before.txt`](./patches/examples/target-tree.before.txt)
-  - [`patches/examples/target-tree.after.txt`](./patches/examples/target-tree.after.txt)
+- [Best Practices](./references/best-practices.md)
+- [Examples](./references/examples.md)
+- [Anthropic: Effective Harnesses for Long-Running Agents](https://www.anthropic.com/engineering/effective-harnesses-for-long-running-agents)
