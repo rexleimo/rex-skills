@@ -31,6 +31,26 @@ This repository hosts specialized skills (sub-agents) that extend the capabiliti
     * **Claude Code**: For SOTA-level complex refactoring.
     * **Codex/Main Agent**: For task flow control.
 
+### 4. [OpenSpec Parallel Agents](./openspec-parallel-agents/)
+* **Goal**: Orchestrate concurrent sub-agents for OpenSpec workflows.
+* **Features**: Supports OPSX, legacy openspec, and Codex CLI commands. Safely handles multiple changes through dependency analysis.
+* **Use Case**: When you need parallel execution of OpenSpec proposals, applications, or archival tasks while avoiding write conflicts.
+
+### 5. [Spec Kit Parallel Orchestrator](./spec-kit-parallel-orchestrator/)
+* **Goal**: Parallelize Spec Kit workflows (define, plan, implement).
+* **Methodology**: Splits tasks into 3-6 parallel sub-agents with staged rollups.
+* **Use Case**: When using `/speckit.*` commands or requesting Spec-driven concurrent development flows.
+
+### 6. [Superpowers Parallel Agents](./superpowers-parallel-agents/)
+* **Goal**: Accelerate "superpowers" tasks by splitting them into independent domains.
+* **Workflow**: Schedules parallel agents for implementation and validation, ensuring non-overlapping edit scopes.
+* **Use Case**: When tasks can be divided into different problem domains that can be solved and validated concurrently.
+
+### 7. [Review Loop Skill](./review-loop-skill/)
+* **Goal**: Automated two-phase code review loop for universal AI coding agents.
+* **Architecture**: Implements task → independent CLI agent review → feedback addressing workflow.
+* **Features**: Works with any Agent Skills compatible tool (Claude Code, Cursor, Codex, Gemini CLI, etc.), supports multiple reviewers (Codex, Claude, Gemini, OpenCode, Aider).
+
 ## 🚀 Installation & Usage
 
 To use these skills, you typically register the `SKILL.md` file with your AI CLI agent.
@@ -103,6 +123,11 @@ Please ensure your skill follows the `SKILL.md` metadata standard and includes a
 * **目标**: 通过将任务拆分为独立领域来加速 "superpowers" 任务。
 * **工作流**: 调度并行代理进行实现和验证，确保编辑范围不重叠。
 * **适用场景**: 当任务可以划分为不同的问题域，且可以并发解决和验证时。
+
+### 7. [Review Loop 技能 (Review Loop Skill)](./review-loop-skill/)
+* **目标**: 为通用 AI 编程代理提供自动化的两阶段代码审查循环。
+* **架构**: 实现任务 → 独立 CLI 代理审查 → 反馈处理工作流。
+* **特性**: 兼容任何 Agent Skills 工具（Claude Code、Cursor、Codex、Gemini CLI 等），支持多种审查者（Codex、Claude、Gemini、OpenCode、Aider）。
 
 ## 🚀 安装与使用 (Installation & Usage)
 
