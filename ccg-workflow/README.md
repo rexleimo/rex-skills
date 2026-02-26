@@ -18,8 +18,36 @@
 
 ### 2. 安装
 
+#### 方式一：使用安装脚本（推荐）
+
+```bash
+# 克隆或下载技能包
+git clone <repository-url> ccg-workflow
+cd ccg-workflow
+
+# 运行安装脚本
+./install.sh
+```
+
+安装脚本会将斜杠命令链接到 `~/.claude/commands/ccg/` 目录，使您可以在任何项目中使用 `/ccg:propose`、`/ccg:explore` 等命令。
+
+#### 方式二：手动安装
+
 1.  下载最新的 `ccg-workflow-openskill-*.zip` 安装包。
 2.  将安装包解压到您 AI 助手的技能目录（例如 `~/.config/manus/skills/` 或 `~/.claude/skills/`）。
+3.  手动创建命令链接：
+    ```bash
+    mkdir -p ~/.claude/commands/ccg
+    ln -s /path/to/ccg-workflow/commands/*.md ~/.claude/commands/ccg/
+    ```
+
+#### 卸载
+
+如需卸载，运行：
+
+```bash
+./uninstall.sh
+```
 
 ### 3. 首次运行
 
