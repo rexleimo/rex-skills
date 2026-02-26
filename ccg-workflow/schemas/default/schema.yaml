@@ -1,0 +1,109 @@
+# CCG Workflow Schema: default
+# ─────────────────────────────────────────────────────────
+# Full 6-phase multi-agent orchestration workflow.
+# This is the default schema. Fork it to create custom workflows.
+#
+# Usage:
+#   schema: default          (in config.yaml)
+#   --schema default         (CLI override)
+# ─────────────────────────────────────────────────────────
+
+name: default
+version: 1
+description: Full multi-agent workflow — Enhance → Research → Ideation → Plan → Execute → Review
+
+phases:
+  - id: enhance
+    title: Prompt Enhancement
+    description: Clarify vague requirements into structured task descriptions
+    template: templates/enhance.md
+    instruction: |
+      Analyze user input for completeness. Score 0-10.
+      If score < config.workflow.enhance.min_completeness → pause and ask user.
+      Produce enhanced prompt with: goal, constraints, scope, acceptance criteria.
+      Show original vs enhanced, ask user to confirm.
+    requires: []
+    backends: [coordinator]
+    skippable: true
+    skip_condition: "config.workflow.enhance.enabled == false"
+
+  - id: research
+    title: Context Research
+    description: Gather project context, existing code, constraints
+    template: templates/research.md
+    instruction: |
+      Scan project structure, identify patterns, collect constraints.
+      Rate requirement completeness. Output structured context summary.
+    requires: [enhance]
+    backends: [coordinator]
+    skippable: false
+
+  - id: ideation
+    title: Multi-Model Ideation
+    description: Parallel dispatch to backend + frontend models for analysis
+    template: templates/ideation.md
+    instruction: |
+      Dispatch enhanced prompt + research context to both backend and frontend models.
+      Wait for both results. Cross-validate using trust rules.
+      Present min_options solution options with trade-offs.
+      Wait for user selection.
+    requires: [research]
+    backends: [backend, frontend]
+    parallel: true
+    roles:
+      backend: roles/backend-expert.md
+      frontend: roles/frontend-expert.md
+
+  - id: plan
+    title: Implementation Plan
+    description: Detailed plan with user approval gate
+    template: templates/plan.md
+    instruction: |
+      Based on user's chosen approach, produce detailed implementation plan.
+      Include: file changes, component structure, API design, acceptance criteria.
+      Optionally resume model sessions for deeper planning.
+      HARD STOP: Wait for user approval before proceeding.
+    requires: [ideation]
+    backends: [coordinator]
+    approval_required: true
+
+  - id: execute
+    title: Implementation
+    description: Execute plan, route tasks to appropriate models
+    template: templates/execute.md
+    instruction: |
+      Route implementation tasks based on type:
+        Frontend tasks → frontend model guidance → Coordinator writes code
+        Backend tasks → backend model guidance → Coordinator writes code
+        Fullstack → parallel dispatch to both
+      Only Coordinator writes to file system.
+    requires: [plan]
+    backends: [backend, frontend, coordinator]
+    parallel: true
+    roles:
+      backend: roles/backend-expert.md
+      frontend: roles/frontend-expert.md
+
+  - id: review
+    title: Multi-Model Review
+    description: Parallel review from both models with scoring
+    template: templates/review.md
+    instruction: |
+      Dispatch code changes to both reviewers simultaneously.
+      Collect structured JSON findings. Merge + deduplicate.
+      Apply trust rules for conflicts. Score findings.
+      If total score < config.workflow.review.min_score → iterate.
+    requires: [execute]
+    backends: [backend, frontend]
+    parallel: true
+    roles:
+      backend: roles/reviewer-backend.md
+      frontend: roles/reviewer-frontend.md
+
+finalize:
+  requires: [review]
+  actions:
+    - verify_acceptance_criteria
+    - run_tests
+    - generate_commit
+    - report_summary

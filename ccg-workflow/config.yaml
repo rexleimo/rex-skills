@@ -1,0 +1,161 @@
+# CCG Workflow Configuration
+# ─────────────────────────────────────────────────────────
+# This file controls how the multi-agent orchestration behaves.
+# Place it at: <project-root>/ccg-workflow.yaml
+# Or override with: CCG_CONFIG=<path>
+#
+# Three levels of customization (inspired by OpenSpec):
+#   1. This config file   → Project-level defaults
+#   2. schemas/            → Custom workflow definitions
+#   3. CLI flags / env     → Runtime overrides
+# ─────────────────────────────────────────────────────────
+
+# ┌───────────────────────────────────────────────────────┐
+# │  1. SCHEMA SELECTION                                  │
+# │  Which workflow schema to use by default              │
+# └───────────────────────────────────────────────────────┘
+schema: default
+# Options:
+#   default       — Full 6-phase workflow (Enhance → Research → Ideation → Plan → Execute → Review)
+#   fast          — Skip Enhance + Ideation, go straight to Plan → Execute → Review
+#   review-only   — Only run Review phase
+#   custom        — Use a custom schema from schemas/ directory
+
+# ┌───────────────────────────────────────────────────────┐
+# │  2. MODEL BACKENDS                                    │
+# │  Configure which AI models to use for each role       │
+# └───────────────────────────────────────────────────────┘
+backends:
+  # Backend expert model (API, DB, algorithms, security)
+  backend:
+    provider: codex                    # codex | gemini | claude | openai-compatible
+    model: null                        # null = use provider default
+    # For openai-compatible providers:
+    # endpoint: https://api.example.com/v1
+    # api_key_env: MY_API_KEY          # Environment variable name
+
+  # Frontend expert model (UI/UX, components, accessibility)
+  frontend:
+    provider: gemini                   # codex | gemini | claude | openai-compatible
+    model: gemini-2.5-pro              # Specific model version
+    # model: gemini-2.5-flash          # Cheaper alternative for simple tasks
+
+  # Fallback / sub-agent model
+  fallback:
+    provider: claude
+    model: null
+
+# ┌───────────────────────────────────────────────────────┐
+# │  3. PROJECT CONTEXT                                   │
+# │  Injected into ALL model invocations as context       │
+# │  (Similar to OpenSpec's context field)                │
+# └───────────────────────────────────────────────────────┘
+context: |
+  # Uncomment and fill in your project details:
+  # Tech stack: TypeScript, React, Node.js, PostgreSQL
+  # API style: RESTful with OpenAPI docs
+  # Testing: Jest + React Testing Library
+  # CSS: Tailwind CSS v3
+  # State management: Zustand
+  # Key conventions: Feature-based folder structure
+
+# ┌───────────────────────────────────────────────────────┐
+# │  4. TRUST RULES                                       │
+# │  Control how conflicts between models are resolved    │
+# └───────────────────────────────────────────────────────┘
+trust:
+  # Domain authority mapping
+  # Format: <domain>: <provider>
+  # The authoritative provider's opinion wins in conflicts
+  backend_domain: codex                # Who is authoritative for backend issues
+  frontend_domain: gemini              # Who is authoritative for frontend issues
+  cross_cutting: coordinator           # coordinator | backend | frontend | ask_user
+
+  # Conflict resolution strategy
+  conflict_strategy: domain_expert     # domain_expert | always_ask | majority_vote
+
+# ┌───────────────────────────────────────────────────────┐
+# │  5. WORKFLOW BEHAVIOR                                 │
+# │  Fine-tune how each phase operates                    │
+# └───────────────────────────────────────────────────────┘
+workflow:
+  # Prompt Enhancement (Phase 0)
+  enhance:
+    enabled: true                      # Set false to skip prompt enhancement
+    min_completeness: 7                # Score threshold (0-10), below this → ask user
+    auto_enhance: false                # true = enhance without asking, false = show diff first
+
+  # Research (Phase 1)
+  research:
+    scan_depth: medium                 # light | medium | deep
+    include_git_history: true          # Scan recent git log for context
+
+  # Ideation (Phase 2)
+  ideation:
+    parallel: true                     # true = dispatch both models simultaneously
+    min_options: 2                     # Minimum solution options to present
+    auto_select: false                 # true = auto-pick best option, false = ask user
+
+  # Plan (Phase 3)
+  plan:
+    require_approval: true             # Hard stop: must get user approval before execute
+    detail_level: detailed             # brief | detailed | comprehensive
+
+  # Execute (Phase 4)
+  execute:
+    dry_run: false                     # true = show what would change without writing files
+    auto_commit: false                 # true = auto-commit after execution
+    commit_style: conventional         # conventional | gitmoji | simple
+
+  # Review (Phase 5)
+  review:
+    parallel: true                     # true = dispatch both reviewers simultaneously
+    min_score: 80                      # Score threshold (0-100), below this → iterate
+    severity_filter: major             # critical | major | minor | suggestion (minimum to report)
+    auto_fix: false                    # true = auto-fix issues, false = report only
+
+# ┌───────────────────────────────────────────────────────┐
+# │  6. PER-WORKFLOW RULES                                │
+# │  Custom rules injected into specific workflows        │
+# │  (Similar to OpenSpec's per-artifact rules)           │
+# └───────────────────────────────────────────────────────┘
+rules:
+  dev:
+    - Follow existing component patterns before creating new ones
+    - All new API endpoints must include input validation
+    # - Use feature flags for new features
+  debug:
+    - Always collect reproduction steps before diagnosis
+    - Never guess — if uncertain, ask for more information
+  review:
+    - Do not flag style preferences or linter-catchable issues
+    - Focus on security, correctness, and performance
+    # - All public APIs must have JSDoc comments
+  analyze:
+    - Every analysis must end with concrete action items
+    - Include cost/benefit analysis for architectural decisions
+  init:
+    - Generate CLAUDE.md for every module with >5 files
+  team:
+    - Each builder must have non-overlapping file scopes
+
+# ┌───────────────────────────────────────────────────────┐
+# │  7. SAFETY GUARDRAILS                                 │
+# │  Control safety boundaries                            │
+# └───────────────────────────────────────────────────────┘
+safety:
+  max_files_per_execute: 20            # Max files to modify in one execute phase
+  require_user_confirm_before_write: true  # Always ask before writing files
+  context_token_warning: 80000         # Warn when approaching this token count
+  never_kill_background: true          # Never kill background model tasks
+  timeout_seconds: 600                 # Max wait time for model responses
+
+# ┌───────────────────────────────────────────────────────┐
+# │  8. OUTPUT PREFERENCES                                │
+# │  Control output format and verbosity                  │
+# └───────────────────────────────────────────────────────┘
+output:
+  language: zh-CN                      # zh-CN | en | ja | ko (output language)
+  verbosity: normal                    # quiet | normal | verbose
+  show_model_source: true              # Show which model produced each finding
+  report_format: markdown              # markdown | json | both
