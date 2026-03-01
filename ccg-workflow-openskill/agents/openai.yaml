@@ -1,0 +1,4 @@
+interface:
+  display_name: "CCG Workflow OpenSkill"
+  short_description: "Optimize and run /ccg:* workflows under OpenSkill protocol"
+  default_prompt: "Use this skill to normalize ccg-workflow commands into gated OpenSkill phases with Codex+Gemini orchestration and OpenSpec compatibility."

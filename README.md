@@ -51,6 +51,11 @@ This repository hosts specialized skills (sub-agents) that extend the capabiliti
 * **Architecture**: Implements task → independent CLI agent review → feedback addressing workflow.
 * **Features**: Works with any Agent Skills compatible tool (Claude Code, Cursor, Codex, Gemini CLI, etc.), supports multiple reviewers (Codex, Claude, Gemini, OpenCode, Aider).
 
+### 8. [CCG Workflow OpenSkill](./ccg-workflow-openskill/)
+* **Goal**: Normalize `ccg-workflow` into an OpenSkill-compliant, gated workflow.
+* **Methodology**: Command-to-lane routing (`/ccg:*`), phase gates, and Codex/Gemini parallel orchestration.
+* **Use Case**: When migrating, executing, or optimizing `ccg-workflow` with OpenSkill protocol constraints.
+
 ## 🚀 Installation & Usage
 
 To use these skills, you typically register the `SKILL.md` file with your AI CLI agent.
@@ -128,6 +133,11 @@ Please ensure your skill follows the `SKILL.md` metadata standard and includes a
 * **目标**: 为通用 AI 编程代理提供自动化的两阶段代码审查循环。
 * **架构**: 实现任务 → 独立 CLI 代理审查 → 反馈处理工作流。
 * **特性**: 兼容任何 Agent Skills 工具（Claude Code、Cursor、Codex、Gemini CLI 等），支持多种审查者（Codex、Claude、Gemini、OpenCode、Aider）。
+
+### 8. [CCG Workflow OpenSkill](./ccg-workflow-openskill/)
+* **目标**: 将 `ccg-workflow` 规范化为符合 OpenSkill 协议的可复用工作流。
+* **方法论**: 统一 `/ccg:*` 命令路由、阶段门禁、双模型并行编排与 OpenSpec 兼容约束。
+* **适用场景**: 需要迁移、执行或优化 `ccg-workflow`，并要求严格遵循 OpenSkill 规范协议时。
 
 ## 🚀 安装与使用 (Installation & Usage)
 
