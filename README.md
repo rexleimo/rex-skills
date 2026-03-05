@@ -56,6 +56,10 @@ This repository hosts specialized skills (sub-agents) that extend the capabiliti
 * **Methodology**: Command-to-lane routing (`/ccg:*`), phase gates, and Codex/Gemini parallel orchestration.
 * **Use Case**: When migrating, executing, or optimizing `ccg-workflow` with OpenSkill protocol constraints.
 
+### 9. [Secrets Redaction](./secrets-redaction/)
+* **Goal**: Safely display `.env`/config/log output by masking secrets (API keys, tokens, passwords) before sharing.
+* **Use Case**: When users ask to “show `.env`” or you need to debug config without leaking credentials.
+
 ## 🚀 Installation & Usage
 
 To use these skills, you typically register the `SKILL.md` file with your AI CLI agent.
@@ -138,6 +142,10 @@ Please ensure your skill follows the `SKILL.md` metadata standard and includes a
 * **目标**: 将 `ccg-workflow` 规范化为符合 OpenSkill 协议的可复用工作流。
 * **方法论**: 统一 `/ccg:*` 命令路由、阶段门禁、双模型并行编排与 OpenSpec 兼容约束。
 * **适用场景**: 需要迁移、执行或优化 `ccg-workflow`，并要求严格遵循 OpenSkill 规范协议时。
+
+### 9. [敏感信息脱敏 (Secrets Redaction)](./secrets-redaction/)
+* **目标**: 在分享 `.env`/配置/日志输出前自动脱敏（API Key、Token、密码等），避免泄露。
+* **适用场景**: 用户要求“查看 `.env` 内容”或需要排查配置问题但必须避免暴露凭证时。
 
 ## 🚀 安装与使用 (Installation & Usage)
 
