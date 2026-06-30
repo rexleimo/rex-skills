@@ -60,6 +60,11 @@ This repository hosts specialized skills (sub-agents) that extend the capabiliti
 * **Goal**: Safely display `.env`/config/log output by masking secrets (API keys, tokens, passwords) before sharing.
 * **Use Case**: When users ask to “show `.env`” or you need to debug config without leaking credentials.
 
+### 10. [RexAI Image Generation](./rexai-image-generation/)
+* **Goal**: Generate text-to-image and image-to-image results through the RexAI API and save files locally.
+* **Features**: Uses a uv-powered Python runner, checks local environment/auth sources first, polls async jobs, and downloads completed images.
+* **Use Case**: When you need 生图, 文生图, 图生图, image editing from references, or local image result files.
+
 ## 🚀 Installation & Usage
 
 To use these skills, you typically register the `SKILL.md` file with your AI CLI agent.
@@ -146,6 +151,11 @@ Please ensure your skill follows the `SKILL.md` metadata standard and includes a
 ### 9. [敏感信息脱敏 (Secrets Redaction)](./secrets-redaction/)
 * **目标**: 在分享 `.env`/配置/日志输出前自动脱敏（API Key、Token、密码等），避免泄露。
 * **适用场景**: 用户要求“查看 `.env` 内容”或需要排查配置问题但必须避免暴露凭证时。
+
+### 10. [RexAI 生图技能 (RexAI Image Generation)](./rexai-image-generation/)
+* **目标**: 通过 RexAI API 执行文生图、图生图，并将生成结果保存为本地文件。
+* **特性**: 使用 uv 驱动 Python runner，先检查本机环境与密钥来源，再提交异步任务、轮询结果并下载图片。
+* **适用场景**: 需要生图、生成图片、文生图、图生图、基于参考图改图，或需要把结果落盘到本地时。
 
 ## 🚀 安装与使用 (Installation & Usage)
 

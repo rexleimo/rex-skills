@@ -1,0 +1,4 @@
+interface:
+  display_name: "RexAI Image Generation"
+  short_description: "用 RexAI API 生成图片并下载到本地文件中"
+  default_prompt: "Use $rexai-image-generation to generate an image from this prompt and save the result locally."

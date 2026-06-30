@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PY_SCRIPT="$SCRIPT_DIR/rexai_image.py"
+
+if ! command -v uv >/dev/null 2>&1; then
+  echo "uv was not found. Installing uv with the official installer..." >&2
+  curl -LsSf https://astral.sh/uv/install.sh | sh
+  export PATH="$HOME/.local/bin:$HOME/.cargo/bin:$PATH"
+fi
+
+if ! command -v uv >/dev/null 2>&1; then
+  echo "uv is still unavailable after installation. Add uv to PATH and retry." >&2
+  exit 127
+fi
+
+exec uv run --script "$PY_SCRIPT" "$@"
